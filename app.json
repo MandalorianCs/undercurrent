@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "Undercurrent",
+    "slug": "undercurrent",
+    "version": "0.1.0",
+    "scheme": "undercurrent",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "kz.undercurrent.app"
+    },
+    "android": {
+      "package": "kz.undercurrent.app",
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font"
+    ],
+    "experiments": {
+      "baseUrl": "/undercurrent/app"
+    }
+  }
+}

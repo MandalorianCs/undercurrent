@@ -1,0 +1,53 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# Собранная публикация для GitHub Pages.
+# Expo именует ассеты по их исходному пути, поэтому шрифты ложатся в
+# docs/app/assets/node_modules/… — и правило выше молча выбрасывало их
+# из коммита. Симптом: приложение открывается белым экраном, потому что
+# оно ждёт шрифты перед первым кадром, а те возвращают 404.
+#
+# Порядок важен: сначала возвращаем саму папку, потом содержимое. Git не
+# переподключает файл, если исключена его родительская директория.
+!docs/
+!docs/**
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+# generated native folders
+/ios
+/android
