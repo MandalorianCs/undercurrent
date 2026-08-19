@@ -62,19 +62,24 @@ select ('44444444-0000-0000-0000-' || lpad(i::text, 12, '0'))::uuid,
 
 select t_eq(
   recompute_hr_aggregates('33333333-0000-0000-0000-000000000001'),
-  2,
-  'посчитаны два отдела: продажи и финансы');
+  3,
+  'посчитаны два отдела и общий срез по компании');
 
 do $$
 declare
   v_sales   hr_aggregates;
   v_finance hr_aggregates;
+  v_all     hr_aggregates;
 begin
   select * into v_sales   from hr_aggregates where department_tag = 'sales';
   select * into v_finance from hr_aggregates where department_tag = 'finance';
+  select * into v_all     from hr_aggregates where department_tag is null;
 
   perform t_eq(v_sales.sample_size,   6, 'в продажах шесть разных сессий');
   perform t_eq(v_finance.sample_size, 2, 'в финансах две сессии');
+  -- Общий срез включает и тех, кто отдел не указал: охват компании
+  -- считается по людям, а не по заполненным полям.
+  perform t_eq(v_all.sample_size,     8, 'общий охват — восемь сессий');
 
   -- 100 × (0.35·0.8 + 0.25·0.9 + 0.20·0.3 + 0.20·0.1) = 58.5
   -- Если бы в расчёт попали реплики модели, вышло бы заметно выше.
@@ -87,15 +92,23 @@ end $$;
 select t_as('11111111-0000-0000-0000-000000000003', 'hr@nomadtech.kz', false);
 set role authenticated;
 
-select t_eq((select count(*)::int from hr_aggregates), 1, 'HR видит ровно один срез из двух посчитанных');
+select t_eq((select count(*)::int from hr_aggregates), 2, 'HR видит два среза из трёх посчитанных');
 select t_eq(
-  (select department_tag from hr_aggregates),
+  (select department_tag from hr_aggregates where department_tag is not null),
   'sales',
   'виден отдел, где выборка достаточна');
 select t_eq(
   (select count(*)::int from hr_aggregates where department_tag = 'finance'),
   0,
   'отдел из двух человек скрыт порогом');
+
+-- Общий срез виден, и по нему HR понимает, что охват шире того, что
+-- разложено по отделам: 8 человек всего против 6 в единственном
+-- видимом отделе. Остаток существует, но неразличим — ровно так и надо.
+select t_eq(
+  (select sample_size from hr_aggregates where department_tag is null),
+  8,
+  'общий охват виден и больше суммы видимых отделов');
 
 reset role;
 
@@ -111,7 +124,14 @@ update app_settings set value = 7 where key = 'min_sample_size';
 select t_as('11111111-0000-0000-0000-000000000003', 'hr@nomadtech.kz', false);
 set role authenticated;
 
-select t_eq((select count(*)::int from hr_aggregates), 0, 'при пороге 7 скрываются и продажи');
+select t_eq(
+  (select count(*)::int from hr_aggregates where department_tag is not null),
+  0,
+  'при пороге 7 скрываются и продажи');
+select t_eq(
+  (select count(*)::int from hr_aggregates where department_tag is null),
+  1,
+  'общий срез по компании из восьми человек остаётся');
 
 reset role;
 

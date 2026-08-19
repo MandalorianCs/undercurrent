@@ -24,8 +24,16 @@
       "expo-router",
       "expo-font"
     ],
-    "experiments": {
-      "baseUrl": "/undercurrent/app"
+    "extra": {
+      "eas": {
+        "projectId": "733341fa-026c-4e91-a77a-acbc2f8d8ef7"
+      }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/733341fa-026c-4e91-a77a-acbc2f8d8ef7"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
     }
   }
 }
