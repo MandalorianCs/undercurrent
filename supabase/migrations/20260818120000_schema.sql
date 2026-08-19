@@ -282,7 +282,17 @@ create table hr_aggregates (
   -- сообщение о конкретном человеке, как его ни называй.
   sample_size     integer not null,
   computed_at     timestamptz not null default now(),
-  unique (company_id, department_tag, period_start, period_end)
+
+  -- Имя задано явно. Автоматическое Postgres собрал бы сам и обрезал до
+  -- 63 символов по своему алгоритму — а сослаться на такое имя из
+  -- будущей миграции можно только угадывая, чем оно обернулось.
+  --
+  -- nulls not distinct: у среза «по всей компании» department_tag пуст,
+  -- и без этого указания два null считались бы разными значениями.
+  -- Ограничение бы не сработало, и каждый пересчёт добавлял бы ещё одну
+  -- копию общей строки вместо обновления существующей.
+  constraint hr_aggregates_slice_key
+    unique nulls not distinct (company_id, department_tag, period_start, period_end)
 );
 
 create index hr_aggregates_lookup_idx

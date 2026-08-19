@@ -282,38 +282,58 @@ declare
   v_prev_start date    := p_period_end - (v_days * 2);
   v_rows       integer;
 begin
-  with cur as (
-    select c.department_tag                        as dep,
-           avg(message_risk(m.stress_markers))     as risk,
-           count(distinct c.anonymous_session_id)  as n
+  with base as (
+    select c.department_tag       as dep,
+           c.anonymous_session_id as session_id,
+           m.stress_markers       as markers,
+           m.created_at           as at
       from conversations c
       join messages m on m.conversation_id = c.id
      where c.company_id     = p_company
-       -- Разговоры без отдела в агрегаты не идут. Это не пропуск данных,
-       -- а соблюдение выбора: человек, не указавший отдел, сказал этим
-       -- «не считайте меня в срезе».
-       and c.department_tag is not null
        -- Только реплики человека. Ответы модели тоже проходят через
        -- разметку, и если их учитывать, риск отдела начнёт зависеть от
        -- того, насколько сочувственно сформулирован ответ бота.
        and m.role           = 'user'
        and m.stress_markers is not null
-       and m.created_at    >= v_start
+       and m.created_at    >= v_prev_start
        and m.created_at     < p_period_end + 1
-     group by c.department_tag
+  ),
+  -- Два набора строк: по отделам и одна общая, с пустым department_tag.
+  --
+  -- Общая нужна затем, что отдел, не набравший порог, просто исчезает с
+  -- дашборда, и HR читает это как «там спокойно». На деле там может быть
+  -- что угодно — данных лишь недостаточно, чтобы показать их безопасно.
+  -- Общая строка показывает охват целиком, не давая разложить остаток по
+  -- отделам.
+  --
+  -- В общую попадают и те, кто отдел не указал: на охват это влияет, а
+  -- на анонимность нет — в срезе по всей компании никого не выделить по
+  -- определению. В разбивку по отделам они по-прежнему не идут, и это
+  -- соблюдение их выбора: не указав отдел, человек сказал «не считайте
+  -- меня в срезе».
+  cur as (
+    select dep,
+           avg(message_risk(markers))  as risk,
+           count(distinct session_id)  as n
+      from base
+     where at >= v_start and dep is not null
+     group by dep
+    union all
+    select null::text,
+           avg(message_risk(markers)),
+           count(distinct session_id)
+      from base
+     where at >= v_start
   ),
   prev as (
-    select c.department_tag                    as dep,
-           avg(message_risk(m.stress_markers)) as risk
-      from conversations c
-      join messages m on m.conversation_id = c.id
-     where c.company_id     = p_company
-       and c.department_tag is not null
-       and m.role           = 'user'
-       and m.stress_markers is not null
-       and m.created_at    >= v_prev_start
-       and m.created_at     < v_start
-     group by c.department_tag
+    select dep, avg(message_risk(markers)) as risk
+      from base
+     where at < v_start and dep is not null
+     group by dep
+    union all
+    select null::text, avg(message_risk(markers))
+      from base
+     where at < v_start
   )
   insert into hr_aggregates (
     company_id, department_tag, period_start, period_end,
@@ -335,7 +355,12 @@ begin
            else                                    'flat'
          end::trend_direction,
          cur.n
-    from cur left join prev on prev.dep = cur.dep
+    -- is not distinct from, а не =: у общей строки dep пуст с обеих
+    -- сторон, а обычное сравнение двух null даёт null, и предыдущий
+    -- период к ней бы не подцепился — тренд всегда показывал бы «без
+    -- изменений».
+    from cur left join prev on prev.dep is not distinct from cur.dep
+   where cur.risk is not null
   on conflict (company_id, department_tag, period_start, period_end)
   do update set risk_score      = excluded.risk_score,
                 trend_direction = excluded.trend_direction,
