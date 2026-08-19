@@ -33,10 +33,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "test:db": "node db-tests/run.mjs",
-    "build:pages": "node scripts/build-pages.mjs",
-    "seed:demo": "node scripts/seed-demo.mjs",
-    "seed:clear": "node scripts/seed-demo.mjs clear"
+    "test:db": "node db-tests/run.mjs"
   },
   "private": true
 }

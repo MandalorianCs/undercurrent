@@ -44,16 +44,28 @@ alter default privileges in schema public grant all on sequences to anon, authen
 create schema if not exists auth;
 grant usage on schema auth to anon, authenticated, service_role;
 
+-- Набор колонок специально шире, чем нужен миграциям: сюда же пишет
+-- supabase/seed.sql, который на живом проекте вставляет строки в
+-- настоящую auth.users. Если бы заглушка знала только id и is_anonymous,
+-- посев нельзя было бы прогнать локально — а именно посев вставляет
+-- учётные записи руками и ломается первым при расхождении со схемой
+-- Supabase.
 create table if not exists auth.users (
   id                 uuid primary key default gen_random_uuid(),
+  instance_id        uuid,
+  aud                text,
+  role               text,
   email              text unique,
+  encrypted_password text,
   email_confirmed_at timestamptz,
   -- Ключевое поле для этого продукта: анонимный вход Supabase помечает
   -- пользователя именно так, и от этого признака зависит, пустят ли
   -- сессию привязывать билет.
   is_anonymous       boolean not null default false,
+  raw_app_meta_data  jsonb not null default '{}',
   raw_user_meta_data jsonb not null default '{}',
-  created_at         timestamptz not null default now()
+  created_at         timestamptz not null default now(),
+  updated_at         timestamptz not null default now()
 );
 
 create or replace function auth.uid() returns uuid
