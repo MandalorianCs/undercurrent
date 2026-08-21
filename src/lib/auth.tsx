@@ -19,8 +19,15 @@ type AuthState = {
   /** B2B, шаг 3: выйти, войти анонимно, погасить билет. */
   becomeAnonymous: (code: string) => Promise<void>;
 
-  /** B2C. */
-  signUpPersonal: (email: string, password: string) => Promise<void>;
+  /**
+   * B2C.
+   *
+   * Возвращает 'needs_confirmation', если проект требует подтверждения
+   * почты: тогда сессии после регистрации ещё нет и человеку надо
+   * сходить в почтовый ящик. Отдаём это признаком, а не исключением —
+   * ничего не сломалось, просто путь длиннее на один шаг.
+   */
+  signUpPersonal: (email: string, password: string) => Promise<'signed_in' | 'needs_confirmation'>;
   signInPersonal: (email: string, password: string) => Promise<void>;
 
   signOut: () => Promise<void>;
@@ -144,13 +151,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
 
       signUpPersonal: async (email, password) => {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email: email.trim().toLowerCase(),
           password,
         });
         if (error) throw error;
+
+        // При включённом «Confirm email» Supabase возвращает пользователя,
+        // но не сессию: до перехода по письму входить некуда. Вызвать
+        // здесь startPersonalSession значит получить UC_NOT_AUTHENTICATED
+        // и показать человеку ошибку про корпоративную почту, которой он
+        // не вводил.
+        if (!data.session) return 'needs_confirmation';
+
         await startPersonalSession();
         await refresh();
+        return 'signed_in';
       },
 
       signInPersonal: async (email, password) => {

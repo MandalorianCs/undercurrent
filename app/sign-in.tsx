@@ -20,6 +20,7 @@ export default function SignIn() {
   const [grant, setGrant] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
 
   // Экран входа переживает перезагрузку: если человек уже подтвердил
   // почту, но закрыл приложение до получения билета, он возвращается не
@@ -31,6 +32,7 @@ export default function SignIn() {
   async function run(fn: () => Promise<void>) {
     setBusy(true);
     setError('');
+    setInfo('');
     try {
       await fn();
     } catch (e) {
@@ -78,11 +80,22 @@ export default function SignIn() {
             placeholder="Не короче шести знаков"
           />
           <Notice text={error} />
+          <Notice tone="info" text={info} />
           <Button title="Войти" onPress={() => run(() => signInPersonal(email, password))} loading={busy} />
           <Button
             title="Создать аккаунт"
             variant="ghost"
-            onPress={() => run(() => signUpPersonal(email, password))}
+            onPress={() =>
+              run(async () => {
+                const result = await signUpPersonal(email, password);
+                if (result === 'needs_confirmation') {
+                  setInfo(
+                    `Мы отправили письмо на ${email.trim().toLowerCase()}. ` +
+                      'Перейдите по ссылке из письма, потом вернитесь сюда и нажмите «Войти».',
+                  );
+                }
+              })
+            }
             disabled={busy}
           />
         </Card>
