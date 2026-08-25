@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -18,7 +19,7 @@ import {
   sendMessage,
 } from '../../src/lib/api';
 import { useAuth } from '../../src/lib/auth';
-import { CRISIS_LINE, CRISIS_REPLY } from '../../src/lib/companion';
+import { CRISIS_CONTACTS, CRISIS_LINE, CRISIS_REPLY } from '../../src/lib/companion';
 import { humanizeError } from '../../src/lib/supabase';
 import type { Conversation, Department, Message } from '../../src/lib/types';
 import { colors, font, radius, spacing, typeface } from '../../src/theme';
@@ -193,15 +194,19 @@ function Bubble({ message }: { message: Message }) {
     return (
       <View style={s.crisis}>
         <Text style={s.crisisText}>{message.content}</Text>
+
         {CRISIS_LINE ? (
-          <Text selectable style={s.crisisLine}>
-            {CRISIS_LINE}
-          </Text>
-        ) : (
-          <Text style={s.crisisHint}>
-            Позвоните тому, кому доверяете, или обратитесь к специалисту.
-          </Text>
-        )}
+          <CrisisCall number={CRISIS_LINE} title="Контакт вашей компании" note="" />
+        ) : null}
+
+        {CRISIS_CONTACTS.map((c) => (
+          <CrisisCall key={c.number} number={c.number} title={c.title} note={c.note} />
+        ))}
+
+        <Text style={s.crisisHint}>
+          Если звонить сейчас тяжело — напишите тому, кому доверяете. Главное, чтобы рядом оказался
+          человек.
+        </Text>
       </View>
     );
   }
@@ -210,6 +215,35 @@ function Bubble({ message }: { message: Message }) {
     <View style={[s.bubble, mine ? s.bubbleMine : s.bubbleTheirs]}>
       <Text style={[s.bubbleText, mine && { color: colors.text }]}>{message.content}</Text>
     </View>
+  );
+}
+
+/**
+ * Номер кризисной линии — нажимаемый.
+ *
+ * Человеку в тяжёлом состоянии нельзя предлагать переписать цифры в
+ * приложение «Телефон»: каждый лишний шаг — это возможность передумать.
+ * Одно касание должно открывать набор номера.
+ */
+function CrisisCall({ number, title, note }: { number: string; title: string; note: string }) {
+  return (
+    <Pressable
+      onPress={() => {
+        // Молча: если набор недоступен (десктопный браузер без
+        // обработчика tel:), падать с ошибкой нельзя — номер всё равно
+        // виден на экране и его можно набрать вручную.
+        Linking.openURL(`tel:${number.replace(/[^\d+]/g, '')}`).catch(() => {});
+      }}
+      style={({ pressed }) => [s.crisisCall, pressed && { opacity: 0.8 }]}
+    >
+      <Text selectable style={s.crisisNumber}>
+        {number}
+      </Text>
+      <View style={{ flex: 1 }}>
+        <Text style={s.crisisCallTitle}>{title}</Text>
+        {note ? <Text style={s.crisisHint}>{note}</Text> : null}
+      </View>
+    </Pressable>
   );
 }
 
@@ -236,8 +270,17 @@ const s = StyleSheet.create({
     gap: spacing.md,
   },
   crisisText: { ...font.body, color: colors.text },
-  crisisLine: { ...font.h2, color: colors.alert, textAlign: 'center' },
   crisisHint: { ...font.small, color: colors.textMuted },
+  crisisCall: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: colors.panel,
+    borderRadius: radius.md,
+    padding: spacing.md,
+  },
+  crisisNumber: { ...font.h1, color: colors.alert },
+  crisisCallTitle: { ...font.body, color: colors.text },
 
   composer: {
     flexDirection: 'row',

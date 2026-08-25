@@ -33,7 +33,9 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "test:db": "node db-tests/run.mjs"
+    "test:db": "node db-tests/run.mjs",
+    "test:crisis": "node --experimental-strip-types src/lib/companion.test.ts",
+    "test": "npm run typecheck && npm run test:crisis && npm run test:db"
   },
   "private": true
 }
