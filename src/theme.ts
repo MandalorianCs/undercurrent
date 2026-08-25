@@ -38,24 +38,15 @@ export const radius = { sm: 8, md: 12, lg: 16, pill: 999 } as const;
  * пузырь сообщения в чате должны лежать на одной высоте, иначе интерфейс
  * выглядит собранным из кусков.
  *
- * shadow* работает на iOS и в вебе (react-native-web переводит их в
- * box-shadow), elevation — на Android. Нужны оба набора, одного мало.
+ * Один `boxShadow` вместо прежней пары `shadowColor` и `elevation`.
+ * Раньше нужны были оба набора — первый для iOS и веба, второй для
+ * Android, — но React Native принимает CSS-синтаксис на всех платформах,
+ * и старые свойства объявлены устаревшими: react-native-web ругается на
+ * них в консоли при каждом запуске.
  */
 export const elevation = {
-  card: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    elevation: 2,
-  },
-  raised: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.45,
-    shadowRadius: 22,
-    elevation: 6,
-  },
+  card: { boxShadow: '0 6px 16px rgba(0, 0, 0, 0.35)' },
+  raised: { boxShadow: '0 10px 22px rgba(0, 0, 0, 0.45)' },
 } as const;
 
 /**

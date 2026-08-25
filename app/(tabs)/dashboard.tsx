@@ -7,6 +7,19 @@ import { humanizeError } from '../../src/lib/supabase';
 import type { Department, HrAggregate } from '../../src/lib/types';
 import { colors, font, radius, riskTone, spacing } from '../../src/theme';
 
+/**
+ * Дельта в скобках после направления: «↑ вырос (+34%)».
+ *
+ * Отдельно от стрелки намеренно. Стрелка появляется только при движении
+ * больше пяти пунктов — это полоса нечувствительности против шума.
+ * Дельта же может быть посчитана и при меньшем движении, и показывать
+ * «→ без изменений (+3%)» значит спорить с самим собой.
+ */
+function formatDelta(pct: number | null): string {
+  if (pct === null || pct === 0) return '';
+  return `  (${pct > 0 ? '+' : ''}${pct}%)`;
+}
+
 const TREND: Record<string, { arrow: string; text: string }> = {
   up: { arrow: '↑', text: 'вырос' },
   down: { arrow: '↓', text: 'снизился' },
@@ -85,6 +98,7 @@ export default function Dashboard() {
                 />
                 <Text style={s.trend}>
                   {TREND[overall.trend_direction]?.arrow} {TREND[overall.trend_direction]?.text} за период
+                  {formatDelta(overall.risk_delta_pct)}
                 </Text>
               </View>
             </View>
@@ -112,6 +126,7 @@ export default function Dashboard() {
                       <Text style={s.dept}>{title(row.department_tag)}</Text>
                       <Text style={s.trend}>
                         {TREND[row.trend_direction]?.arrow} {TREND[row.trend_direction]?.text}
+                        {formatDelta(row.trend_direction === 'flat' ? null : row.risk_delta_pct)}
                         {'  ·  '}
                         {row.sample_size} чел.
                       </Text>

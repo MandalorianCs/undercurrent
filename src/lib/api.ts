@@ -225,7 +225,7 @@ export async function fetchHrAggregates(companyId: string): Promise<HrAggregate[
     await supabase
       .from('hr_aggregates')
       .select(
-        'id, company_id, department_tag, period_start, period_end, risk_score, trend_direction, sample_size, computed_at',
+        'id, company_id, department_tag, period_start, period_end, risk_score, trend_direction, sample_size, risk_delta_pct, computed_at',
       )
       .eq('company_id', companyId)
       .order('period_start', { ascending: false })
