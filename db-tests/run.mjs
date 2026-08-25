@@ -43,6 +43,7 @@ const STEPS = [
   ['сценарий 1 — путь сотрудника', 'db-tests/20_access_flow.sql'],
   ['сценарий 2 — изоляция', 'db-tests/30_isolation.sql'],
   ['сценарий 3 — агрегаты и порог', 'db-tests/40_aggregates.sql'],
+  ['сценарий 4 — Telegram', 'db-tests/50_telegram.sql'],
 ];
 
 const docker = (args, opts = {}) => spawnSync('docker', args, { encoding: 'utf8', ...opts });

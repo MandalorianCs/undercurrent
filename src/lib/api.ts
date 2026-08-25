@@ -247,6 +247,16 @@ export async function fetchMySubscription(userId: string): Promise<PersonalSubsc
   return data;
 }
 
+/**
+ * Код для привязки Telegram.
+ *
+ * Анонимной сессии функция откажет с UC_ANONYMOUS — и это не проверка
+ * прав, а суть: связка с Telegram означала бы связку с номером телефона.
+ */
+export async function issueTelegramLinkCode(): Promise<string> {
+  return unwrap(await supabase.rpc('issue_telegram_link_code'));
+}
+
 export async function exportMyData(): Promise<unknown> {
   return unwrap(await supabase.rpc('export_my_data'));
 }

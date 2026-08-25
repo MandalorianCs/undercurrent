@@ -1,10 +1,16 @@
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button, Card, H2, Notice, P, Screen } from '../../src/components/ui';
-import { deleteMyData, exportMyData } from '../../src/lib/api';
+import { deleteMyData, exportMyData, issueTelegramLinkCode } from '../../src/lib/api';
 import { signOutIsDestructive, useAuth } from '../../src/lib/auth';
 import { humanizeError } from '../../src/lib/supabase';
 import { colors, font, radius, spacing, typeface } from '../../src/theme';
+
+/**
+ * Имя бота из окружения: у разработки и продакшна они разные, а зашитое
+ * в код имя однажды уведёт тестового пользователя в боевого бота.
+ */
+const TELEGRAM_BOT = process.env.EXPO_PUBLIC_TELEGRAM_BOT ?? 'UndercurrentBot';
 
 export default function Settings() {
   const { viewer, signOut } = useAuth();
@@ -14,6 +20,7 @@ export default function Settings() {
   const [error, setError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmSignOut, setConfirmSignOut] = useState(false);
+  const [tgCode, setTgCode] = useState('');
 
   const destructiveSignOut = signOutIsDestructive(viewer);
 
@@ -67,6 +74,40 @@ export default function Settings() {
           </>
         ) : null}
       </Card>
+
+      {/* Telegram доступен именным аккаунтам: HR и личной подписке.
+          Анонимной сессии функция в базе откажет, поэтому и кнопку ей
+          не показываем — предлагать действие, которое заведомо не
+          сработает, значит выглядеть сломанным. */}
+      {viewer.kind === 'hr' || viewer.kind === 'personal' ? (
+        <Card>
+          <H2>Подключить Telegram</H2>
+          <P muted>
+            {viewer.kind === 'hr'
+              ? 'Изменения по отделам будут приходить в Telegram. Только цифры — переписки там не будет никогда.'
+              : 'Напоминания про дневник и важное. Разговор с собеседником остаётся в приложении: Telegram знает ваш номер телефона, а приложение о вас не знает ничего.'}
+          </P>
+          <Notice text={error} />
+          {tgCode ? (
+            <>
+              <Button
+                title="Открыть бота и привязать"
+                onPress={() => {
+                  Linking.openURL(`https://t.me/${TELEGRAM_BOT}?start=${tgCode}`).catch(() => {});
+                }}
+              />
+              <P muted>Ссылка действует пятнадцать минут.</P>
+            </>
+          ) : (
+            <Button
+              title="Получить ссылку"
+              variant="secondary"
+              onPress={() => run(async () => setTgCode(await issueTelegramLinkCode()))}
+              loading={busy}
+            />
+          )}
+        </Card>
+      ) : null}
 
       {viewer.kind !== 'hr' ? (
         <>
