@@ -141,7 +141,28 @@ async def rest_delete(client: httpx.AsyncClient, path: str, params: dict) -> Non
     r.raise_for_status()
 
 
-def app_button(text: str = "Открыть Undercurrent") -> InlineKeyboardMarkup:
+def app_button(text: str = "Открыть Undercurrent") -> InlineKeyboardMarkup | None:
+    """
+    Кнопка со ссылкой на приложение — если ссылка вообще годится.
+
+    Telegram принимает в кнопке только публично достижимый адрес и
+    отклоняет localhost с «Wrong HTTP URL». Причём отклоняет ВСЁ
+    сообщение, а не одну кнопку: человек не получает даже текст, а бот
+    выглядит молчащим.
+
+    Пока приложение не выложено, кнопки просто нет. Это честнее
+    подстановки заглушечного адреса: кнопка, ведущая в никуда, хуже
+    отсутствующей — по ней нажмут.
+    """
+    if not APP_URL.startswith("https://") and "localhost" not in APP_URL:
+        # http:// на публичном домене Telegram принимает, но такой адрес
+        # для продукта про приватность неуместен сам по себе.
+        log.warning("APP_URL без https — кнопка скрыта: %s", APP_URL)
+        return None
+
+    if "localhost" in APP_URL or "127.0.0.1" in APP_URL:
+        return None
+
     return InlineKeyboardMarkup(
         inline_keyboard=[[InlineKeyboardButton(text=text, url=APP_URL)]]
     )
