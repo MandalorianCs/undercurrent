@@ -270,8 +270,10 @@ async def on_start(message: Message) -> None:
         "а приложение о вас не знает ничего.\n\n"
         "Работодатель не может прочитать вашу переписку. Не «обещает не читать» — "
         "не может: связи между вами и вашими сообщениями нет в базе данных.\n\n"
-        "Если вы HR или у вас личная подписка, подключить Telegram можно "
-        "в приложении: Настройки → Подключить Telegram.",
+        "Хотите разговаривать прямо здесь — /login заведёт личную подписку "
+        "на этот Telegram, без почты и пароля.\n\n"
+        "Если вы HR или уже есть аккаунт в приложении — подключить Telegram "
+        "можно там: Настройки → Подключить Telegram.",
         reply_markup=app_button(),
     )
 
@@ -292,6 +294,7 @@ async def on_help(message: Message) -> None:
     await message.answer(
         "Что умеет бот:\n\n"
         "/start — начать\n"
+        "/login — личная подписка на этот Telegram, без почты и пароля\n"
         "/unlink — отвязать этот чат\n"
         "/help — эта справка\n\n"
         "Чего бот не умеет и не будет: показывать переписку сотрудников. "
@@ -299,6 +302,92 @@ async def on_help(message: Message) -> None:
         "а потому что связи между человеком и его сообщениями не существует "
         "в самой базе.",
         reply_markup=app_button(),
+    )
+
+
+# ── Вход через Telegram ───────────────────────────────────────
+#
+# Только для личной подписки. Сотруднику компании этот путь недоступен
+# по существу: корпоративная почта не способ связи, а доказательство
+# права на доступ, и Telegram её не заменяет.
+
+
+async def rest_rpc(client: httpx.AsyncClient, name: str, body: dict) -> httpx.Response:
+    return await client.post(f"{REST}/rpc/{name}", headers=HEADERS, json=body)
+
+
+async def admin(client: httpx.AsyncClient, path: str, body: dict) -> dict:
+    r = await client.post(
+        f"{SUPABASE_URL.rstrip('/')}/auth/v1/{path}", headers=HEADERS, json=body
+    )
+    r.raise_for_status()
+    return r.json()
+
+
+@dp.message(F.text.in_({"/login", "/вход"}))
+async def on_login(message: Message) -> None:
+    """
+    Завести или найти личную подписку по этому чату и прислать ссылку.
+
+    Учётная запись создаётся с синтетическим адресом
+    tg<chat_id>@telegram.local. Он не почта: писем не получает и в
+    отчётах не появляется. Размен осознанный — вход одним нажатием
+    ценой того, что восстановить доступ можно только через Telegram.
+    Об этом сказано прямо в ответе, а не мелким шрифтом.
+    """
+    chat_id = message.chat.id
+    email = f"tg{chat_id}@telegram.local"
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        try:
+            # Уже входил — не заводим второй аккаунт.
+            existing = await rest_rpc(client, "user_by_telegram", {"p_chat_id": chat_id})
+            user_id = existing.json() if existing.status_code < 400 else None
+
+            if not user_id:
+                created = await admin(
+                    client,
+                    "admin/users",
+                    {
+                        "email": email,
+                        "email_confirm": True,
+                        "user_metadata": {"source": "telegram"},
+                    },
+                )
+                user_id = created["id"]
+
+                bound = await rest_rpc(
+                    client,
+                    "link_personal_by_telegram",
+                    {
+                        "p_user": user_id,
+                        "p_chat_id": chat_id,
+                        "p_username": message.from_user.username if message.from_user else None,
+                    },
+                )
+                if bound.status_code >= 400:
+                    raise RuntimeError(bound.text)
+
+            link = await admin(client, "admin/generate_link", {"type": "magiclink", "email": email})
+            action = link.get("action_link") or link.get("properties", {}).get("action_link")
+
+        except Exception as exc:
+            log.warning("вход через Telegram не удался: %s", exc)
+            await message.answer(
+                "Не получилось завести вход. Попробуйте через минуту, "
+                "а если повторится — напишите, разберёмся."
+            )
+            return
+
+    await message.answer(
+        "Готово — личная подписка на этот Telegram.\n\n"
+        f"Ссылка для входа в приложение:\n{action}\n\n"
+        "Ссылка одноразовая. Можете сразу писать мне сюда — я отвечу здесь же, "
+        "а история будет видна и в приложении.\n\n"
+        "⚠️ Важно: у этого аккаунта нет почты и пароля. Войти в него можно "
+        "только отсюда, из этого чата. Если потеряете доступ к Telegram — "
+        "восстановить историю будет нечем.",
+        disable_web_page_preview=True,
     )
 
 
@@ -328,7 +417,8 @@ async def on_text(message: Message) -> None:
 
         if not links:
             await message.answer(
-                "Чтобы разговаривать здесь, нужна личная подписка и привязка.\n\n"
+                "Чтобы разговаривать здесь, нужна личная подписка.\n\n"
+                "Отправьте /login — заведу её на этот Telegram, без почты и пароля.\n\n"
                 "Если вы сотрудник компании — разговор происходит в приложении, "
                 "и это не неудобство: Telegram знает ваш номер телефона, "
                 "а приложение о вас не знает ничего.",
