@@ -281,6 +281,83 @@ async def on_help(message: Message) -> None:
     )
 
 
+# ── Разговор ──────────────────────────────────────────────────
+#
+# Обработчик обычного текста регистрируется ПОСЛЕ команд: aiogram
+# перебирает их в порядке объявления, и поставленный выше он перехватил
+# бы /help и /unlink, отправив их собеседнику как реплику.
+
+
+@dp.message(F.text)
+async def on_text(message: Message) -> None:
+    """
+    Реплика в разговоре — только для личной подписки.
+
+    Ни одного правила беседы здесь нет и быть не должно. Текст уходит в
+    Edge Function, которая исполняет тот же src/lib/companion.ts, что и
+    приложение. Если завтра поменяется распознавание кризиса, оно
+    поменяется сразу в обоих местах, потому что место одно.
+    """
+    async with httpx.AsyncClient(timeout=30) as client:
+        links = await rest_get(
+            client,
+            "telegram_links",
+            {"telegram_id": f"eq.{message.chat.id}", "select": "user_id,kind"},
+        )
+
+        if not links:
+            await message.answer(
+                "Чтобы разговаривать здесь, нужна личная подписка и привязка.\n\n"
+                "Если вы сотрудник компании — разговор происходит в приложении, "
+                "и это не неудобство: Telegram знает ваш номер телефона, "
+                "а приложение о вас не знает ничего.",
+                reply_markup=app_button(),
+            )
+            return
+
+        link = links[0]
+
+        if link["kind"] == "hr":
+            await message.answer(
+                "Это HR-аккаунт — сюда приходят изменения по отделам.\n\n"
+                "Разговор с собеседником доступен по личной подписке."
+            )
+            return
+
+        # Показываем «печатает», пока функция считает: без него пауза в
+        # пару секунд читается как «бот завис», и человек пишет второй раз.
+        await bot.send_chat_action(message.chat.id, "typing")
+
+        try:
+            response = await client.post(
+                f"{SUPABASE_URL.rstrip('/')}/functions/v1/companion",
+                headers=HEADERS,
+                json={"session_id": link["user_id"], "text": message.text},
+            )
+            response.raise_for_status()
+            data = response.json()
+        except Exception as exc:
+            log.warning("собеседник недоступен: %s", exc)
+            await message.answer(
+                "Не получилось ответить — что-то со связью. Напишите ещё раз "
+                "через минуту, я никуда не денусь."
+            )
+            return
+
+        await message.answer(data.get("reply", ""))
+
+        # Контакты приходят вместе с признаком кризиса. Бот не решает,
+        # кризис это или нет: решение принимает та же функция, что и для
+        # приложения, иначе правило раздвоилось бы.
+        if data.get("crisis"):
+            lines = ["Пожалуйста, свяжитесь с человеком прямо сейчас:", ""]
+            for contact in data.get("contacts", []):
+                lines.append(f"<b>{contact['number']}</b> — {contact['title']}")
+                lines.append(contact["note"])
+                lines.append("")
+            await message.answer("\n".join(lines).strip(), parse_mode=ParseMode.HTML)
+
+
 # ── Доставка уведомлений ──────────────────────────────────────
 
 

@@ -20,5 +20,15 @@
   "include": [
     "**/*.ts",
     "**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    // Edge Functions исполняет Deno: там свои глобальные объекты (Deno.env,
+    // Deno.serve) и импорты по URL и jsr:. Компилятор приложения их не
+    // знает и сыплет ошибками на исправном коде.
+    //
+    // Проверять их всё же нужно — этим занимается `npm run check:functions`
+    // через Supabase CLI, который поднимает настоящий Deno.
+    "supabase/functions"
   ]
 }
