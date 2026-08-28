@@ -65,6 +65,10 @@ export default function Dashboard() {
 
   if (loading) return <Loading />;
 
+  // Обратная сторона того же: сотруднику здесь показывать нечего, а
+  // экран успевает смонтироваться при переключении вкладок.
+  if (viewer.kind !== 'hr') return null;
+
   // Свежий период — первый по сортировке из api.
   const period = rows[0]?.period_start ?? null;
   const current = rows.filter((r) => r.period_start === period);

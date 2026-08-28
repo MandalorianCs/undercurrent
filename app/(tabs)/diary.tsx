@@ -65,6 +65,10 @@ export default function Diary() {
 
   if (loading) return <Loading />;
 
+  // См. комментарий в чате: смонтированный экран остаётся поверх
+  // дашборда, если перенаправление не успело.
+  if (viewer.kind === 'hr') return null;
+
   return (
     <Screen>
       <Card>

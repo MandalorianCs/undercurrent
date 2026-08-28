@@ -38,6 +38,10 @@ export default function TabsLayout() {
         options={{
           title: 'Разговор',
           href: isHr ? null : '/',
+          // Спрятать мало: экран остаётся смонтированным и показывает
+          // свою шапку поверх дашборда. Человек видит заголовок
+          // «Разговор» над отчётом по отделам и не понимает, что открыто.
+          headerShown: !isHr,
           tabBarIcon: ({ color, size }) => <Ionicons name="chatbubble-outline" color={color} size={size} />,
         }}
       />
@@ -46,6 +50,7 @@ export default function TabsLayout() {
         options={{
           title: 'Дневник',
           href: isHr ? null : '/diary',
+          headerShown: !isHr,
           tabBarIcon: ({ color, size }) => <Ionicons name="pulse-outline" color={color} size={size} />,
         }}
       />
@@ -54,6 +59,7 @@ export default function TabsLayout() {
         options={{
           title: 'Риски',
           href: isHr ? '/dashboard' : null,
+          headerShown: isHr,
           tabBarIcon: ({ color, size }) => <Ionicons name="analytics-outline" color={color} size={size} />,
         }}
       />
@@ -62,6 +68,7 @@ export default function TabsLayout() {
         options={{
           title: 'Тариф',
           href: isHr ? '/tariff' : null,
+          headerShown: isHr,
           tabBarIcon: ({ color, size }) => <Ionicons name="card-outline" color={color} size={size} />,
         }}
       />

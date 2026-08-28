@@ -35,6 +35,10 @@ export default function Tariff() {
   }, [load]);
 
   if (loading) return <Loading />;
+
+  // Обратная сторона того же: сотруднику здесь показывать нечего, а
+  // экран успевает смонтироваться при переключении вкладок.
+  if (viewer.kind !== 'hr') return null;
   if (!company) return <Notice text={error || 'Компания не найдена'} />;
 
   const tariff = TARIFFS[company.tariff_tier];
