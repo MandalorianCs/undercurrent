@@ -459,6 +459,70 @@
     .thr-note p{margin:0 0 14px;}
     .thr-note p:last-child{margin-bottom:0;}
     .thr-note b{color:var(--text);}
+#pitchmode /* Палитра и шрифты те же, #pitchmode что в приложении и на лендинге: инвестор, #pitchmode открывший подряд презентацию, #pitchmode сайт и продукт, #pitchmode должен увидеть одну
+   вещь, #pitchmode а не три похожие. */
+
+
+
+
+
+/* ── Слайд ────────────────────────────────────────────────────
+   Каждый слайд занимает экран целиком. Прокрутки внутри нет
+   намеренно: если содержимое не помещается, #pitchmode слайд перегружен —
+   в шаблоне ИНК прямо сказано «не более 6 строк текста». */
+.deck{height:100vh;position:relative}#pitchmode .slide{
+  position:absolute; inset:0;
+  display:none; flex-direction:column; justify-content:center;
+  padding:6vh 8vw 12vh;
+  opacity:0; transition:opacity .35s ease;
+}#pitchmode .slide.on{display:flex; opacity:1}#pitchmode .eyebrow{
+  font-family:'IBM Plex Mono',monospace; font-size:12.5px;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--warm);
+  margin-bottom:18px;
+}#pitchmode h1{font-family:'Fraunces',serif; font-weight:600; font-size:clamp(38px,6.5vw,86px); line-height:1.04; letter-spacing:-.02em}#pitchmode h2{font-family:'Fraunces',serif; font-weight:600; font-size:clamp(26px,3.6vw,46px); line-height:1.14; letter-spacing:-.01em; margin-bottom:34px; max-width:20ch}#pitchmode .lead{font-size:clamp(16px,1.5vw,21px); color:var(--text-muted); line-height:1.55; max-width:62ch}#pitchmode /* ── Сетки ──────────────────────────────────────────────────── */
+.cols{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1px; background:var(--hairline); border:1px solid var(--hairline); border-radius:12px; overflow:hidden}#pitchmode .cell{background:var(--panel); padding:26px 24px}#pitchmode .cell h3{font-family:'Fraunces',serif; font-weight:600; font-size:19px; margin-bottom:10px}#pitchmode .cell p{font-size:15px; color:var(--text-muted); line-height:1.5}#pitchmode .num{font-family:'Fraunces',serif; font-size:40px; color:var(--warm); line-height:1; margin-bottom:12px}#pitchmode .num.cool{color:var(--cool)}#pitchmode .num.muted{color:var(--text-muted)}#pitchmode .stats{display:flex; flex-wrap:wrap; gap:44px; margin-top:8px}#pitchmode .stat .v{font-family:'Fraunces',serif; font-size:clamp(30px,4vw,52px); color:var(--warm); line-height:1}#pitchmode .stat .k{font-size:14px; color:var(--text-muted); margin-top:8px; max-width:26ch; line-height:1.45}#pitchmode ul.points{list-style:none; display:flex; flex-direction:column; gap:16px; max-width:64ch}#pitchmode ul.points li{padding-left:26px; position:relative; font-size:clamp(15px,1.45vw,19px); line-height:1.5}#pitchmode ul.points li::before{content:''; position:absolute; left:0; top:.62em; width:9px; height:9px; border-radius:2px; background:var(--warm)}#pitchmode ul.points li b{color:var(--text)}#pitchmode ul.points.cool li::before{background:var(--cool)}#pitchmode table{width:100%; border-collapse:collapse; font-size:15px}#pitchmode th, #pitchmode td{text-align:left; padding:13px 16px; border-bottom:1px solid var(--hairline)}#pitchmode th{font-family:'IBM Plex Mono',monospace; font-size:11.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--text-muted); font-weight:400}#pitchmode td.us{color:var(--cool)}#pitchmode /* Плейсхолдер: пунктир и явная подпись, #pitchmode чтобы такой слайд нельзя
+   было показать случайно, #pitchmode не заметив. */
+.todo{
+  border:1px dashed var(--alert); background:var(--alert-soft);
+  border-radius:10px; padding:22px 24px; color:var(--text);
+  font-size:15.5px; line-height:1.55; max-width:64ch;
+}#pitchmode .todo b{color:var(--alert); font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:.1em; text-transform:uppercase; display:block; margin-bottom:9px}#pitchmode /* ── Служебная панель ───────────────────────────────────────── */
+.bar{
+  position:fixed; left:0; right:0; bottom:0; height:52px;
+  display:flex; align-items:center; gap:22px; padding:0 26px;
+  background:rgba(18,21,28,.92); border-top:1px solid var(--hairline);
+  font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--text-muted);
+  backdrop-filter:blur(8px);
+}#pitchmode .bar .grow{flex:1}#pitchmode .bar b{color:var(--text); font-weight:500}#pitchmode #clock.over{color:var(--alert)}#pitchmode .budget{color:var(--warm)}#pitchmode .track{position:fixed; left:0; bottom:52px; height:2px; background:var(--warm); transition:width .3s ease}#pitchmode kbd{background:var(--panel-2); border:1px solid var(--hairline); border-radius:4px; padding:2px 6px; font-family:inherit; font-size:11px}
+
+
+@media print{#pitchmode .bar, #pitchmode .track{display:none}}
+
+/* ── Режим презентации ────────────────────────────────────────
+   Один файл, две роли. Сайт объясняет продукт и листается мышью;
+   презентация произносится вслух за три минуты и листается стрелками.
+   Смешивать их на одной странице нельзя — они требуют
+   противоположного от вёрстки, поэтому питч живёт внутри #pitchmode
+   и включается целиком, пряча всё остальное. */
+#pitchmode{display:none}
+body.pitch #pitchmode{display:block}
+body.pitch > *:not(#pitchmode){display:none}
+body.pitch{overflow:hidden}
+#pitchmode .deck{height:100vh;position:relative}
+
+.pitch-open{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:7px 15px; border:1px solid var(--warm); border-radius:999px;
+  color:var(--warm); font-size:13.5px; text-decoration:none;
+  transition:background .2s;
+}
+.pitch-open:hover{background:var(--warm-soft)}
+
+/* Диаграмма внутри страницы: своей рамки не имеет — она уже есть у
+   секции, а вторая читалась бы как чужая вставка. */
+.diagram-wrap{margin-top:34px; overflow-x:auto}
+.diagram-wrap svg{width:100%; min-width:900px; height:auto; display:block}
+
 </style>
 </head>
 <body>
@@ -471,6 +535,7 @@
       <a href="#solution">Решение</a>
       <a href="#market">Рынок</a>
       <a href="#team">Команда</a>
+      <a class="pitch-open" href="#pitch">Презентация</a>
     </div>
   </div>
 </nav>
@@ -727,6 +792,129 @@
         <div class="thr-state thr-off">Скрыт порогом</div>
       </div>
     </div>
+    <div class="diagram-wrap reveal"><svg viewBox="0 0 1200 760" role="img" aria-labelledby="isolation-title isolation-desc"
+     xmlns="http://www.w3.org/2000/svg">
+  <title id="isolation-title">Разрез схемы данных Undercurrent</title>
+  <desc id="isolation-desc">Схема из двух несвязанных половин: слева проверка права на вход по корпоративной почте, справа анонимная переписка сотрудника. Единственное, что переходит границу, — одноразовый билет доступа. Внизу HR видит только агрегаты с порогом выборки.</desc>
+
+  <defs>
+    <marker id="ar" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#8B90A0"/>
+    </marker>
+    <marker id="ar-warm" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#D9A15B"/>
+    </marker>
+    <marker id="ar-cool" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#6FA98C"/>
+    </marker>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#12151C"/>
+
+  <!-- ── Зоны (рисуются первыми) ───────────────────────────── -->
+  <rect x="40" y="104" width="460" height="384" rx="8" fill="rgba(236,232,223,0.02)" stroke="rgba(236,232,223,0.10)" stroke-width="0.8"/>
+  <rect x="60" y="108" width="196" height="12" rx="2" fill="#12151C"/>
+  <text x="158" y="117" fill="rgba(236,232,223,0.45)" font-size="7" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.14em">КТО ИМЕЕТ ПРАВО ВОЙТИ</text>
+
+  <rect x="700" y="104" width="460" height="384" rx="8" fill="rgba(236,232,223,0.02)" stroke="rgba(236,232,223,0.10)" stroke-width="0.8"/>
+  <rect x="720" y="108" width="212" height="12" rx="2" fill="#12151C"/>
+  <text x="826" y="117" fill="rgba(236,232,223,0.45)" font-size="7" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.14em">ЧТО ЧЕЛОВЕК НАПИСАЛ</text>
+
+  <rect x="340" y="536" width="660" height="144" rx="8" fill="rgba(236,232,223,0.02)" stroke="rgba(236,232,223,0.10)" stroke-width="0.8"/>
+  <rect x="360" y="540" width="164" height="12" rx="2" fill="#12151C"/>
+  <text x="442" y="549" fill="rgba(236,232,223,0.45)" font-size="7" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.14em">ЧТО ВИДИТ КОМПАНИЯ</text>
+
+  <!-- ── Граница ───────────────────────────────────────────── -->
+  <line x1="600" y1="88" x2="600" y2="500" stroke="#D9A15B" stroke-width="1" stroke-dasharray="4,4" opacity="0.55"/>
+  <rect x="488" y="72" width="224" height="14" rx="2" fill="#12151C"/>
+  <text x="600" y="83" fill="#D9A15B" font-size="8" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.12em">ВНЕШНИХ КЛЮЧЕЙ ЗДЕСЬ НЕТ</text>
+
+  <!-- ── Связи (до узлов, чтобы уходили под них) ───────────── -->
+  <line x1="240" y1="216" x2="240" y2="252" stroke="#8B90A0" stroke-width="1.2" marker-end="url(#ar)"/>
+  <line x1="240" y1="336" x2="240" y2="372" stroke="#8B90A0" stroke-width="1.2" marker-end="url(#ar)"/>
+
+  <!-- Билет — единственное, что пересекает границу -->
+  <path d="M 380,416 H 692 Q 700,416 700,408 V 184 Q 700,176 708,176 H 756"
+        fill="none" stroke="#D9A15B" stroke-width="1.6" marker-end="url(#ar-warm)"/>
+  <rect x="472" y="396" width="56" height="12" rx="2" fill="#12151C"/>
+  <text x="500" y="405" fill="#D9A15B" font-size="8" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.08em">БИЛЕТ</text>
+
+  <line x1="900" y1="216" x2="900" y2="252" stroke="#8B90A0" stroke-width="1.2" marker-end="url(#ar)"/>
+  <line x1="900" y1="336" x2="900" y2="372" stroke="#8B90A0" stroke-width="1.2" marker-end="url(#ar)"/>
+
+  <path d="M 900,456 V 520 Q 900,528 892,528 H 518 Q 510,528 510,536 V 564"
+        fill="none" stroke="#6FA98C" stroke-width="1.2" marker-end="url(#ar-cool)"/>
+  <rect x="668" y="508" width="72" height="12" rx="2" fill="#12151C"/>
+  <text x="704" y="517" fill="#6FA98C" font-size="8" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.08em">МАРКЕРЫ</text>
+
+  <line x1="640" y1="608" x2="716" y2="608" stroke="#6FA98C" stroke-width="1.2" marker-end="url(#ar-cool)"/>
+  <rect x="648" y="588" width="60" height="12" rx="2" fill="#12151C"/>
+  <text x="678" y="597" fill="#6FA98C" font-size="8" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.08em">≥ 5 ЧЕЛ.</text>
+
+  <!-- ── Узлы ──────────────────────────────────────────────── -->
+  <!-- Левая половина -->
+  <rect x="100" y="136" width="280" height="80" rx="6" fill="#1A1E27" stroke="rgba(236,232,223,0.20)"/>
+  <rect x="112" y="146" width="52" height="12" rx="2" fill="none" stroke="rgba(236,232,223,0.28)" stroke-width="0.8"/>
+  <text x="138" y="155" fill="rgba(236,232,223,0.55)" font-size="7" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.08em">AUTH</text>
+  <text x="240" y="184" fill="#ECE8DF" font-size="12" font-weight="600" font-family="'IBM Plex Sans',sans-serif" text-anchor="middle">Корпоративный аккаунт</text>
+  <text x="240" y="200" fill="#8B90A0" font-size="9" font-family="'IBM Plex Mono',monospace" text-anchor="middle">email: anel@company.kz</text>
+
+  <rect x="100" y="256" width="280" height="80" rx="6" fill="rgba(236,232,223,0.05)" stroke="#8B90A0"/>
+  <rect x="112" y="266" width="60" height="12" rx="2" fill="none" stroke="rgba(236,232,223,0.28)" stroke-width="0.8"/>
+  <text x="142" y="275" fill="rgba(236,232,223,0.55)" font-size="7" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.08em">TABLE</text>
+  <text x="240" y="304" fill="#ECE8DF" font-size="12" font-weight="600" font-family="'IBM Plex Sans',sans-serif" text-anchor="middle">employee_access</text>
+  <text x="240" y="320" fill="#8B90A0" font-size="9" font-family="'IBM Plex Mono',monospace" text-anchor="middle">corporate_email_hash</text>
+
+  <rect x="100" y="376" width="280" height="80" rx="6" fill="#3A311F" stroke="#D9A15B"/>
+  <rect x="112" y="386" width="60" height="12" rx="2" fill="none" stroke="rgba(217,161,91,0.50)" stroke-width="0.8"/>
+  <text x="142" y="395" fill="#D9A15B" font-size="7" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.08em">TABLE</text>
+  <text x="240" y="424" fill="#ECE8DF" font-size="12" font-weight="600" font-family="'IBM Plex Sans',sans-serif" text-anchor="middle">access_grants</text>
+  <text x="240" y="440" fill="#D9A15B" font-size="9" font-family="'IBM Plex Mono',monospace" text-anchor="middle">одноразовый, гасится</text>
+
+  <!-- Правая половина -->
+  <rect x="760" y="136" width="280" height="80" rx="6" fill="#1A1E27" stroke="rgba(236,232,223,0.20)"/>
+  <rect x="772" y="146" width="52" height="12" rx="2" fill="none" stroke="rgba(236,232,223,0.28)" stroke-width="0.8"/>
+  <text x="798" y="155" fill="rgba(236,232,223,0.55)" font-size="7" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.08em">AUTH</text>
+  <text x="900" y="184" fill="#ECE8DF" font-size="12" font-weight="600" font-family="'IBM Plex Sans',sans-serif" text-anchor="middle">Анонимный аккаунт</text>
+  <text x="900" y="200" fill="#8B90A0" font-size="9" font-family="'IBM Plex Mono',monospace" text-anchor="middle">email: null · is_anonymous</text>
+
+  <rect x="760" y="256" width="280" height="80" rx="6" fill="rgba(236,232,223,0.05)" stroke="#8B90A0"/>
+  <rect x="772" y="266" width="60" height="12" rx="2" fill="none" stroke="rgba(236,232,223,0.28)" stroke-width="0.8"/>
+  <text x="802" y="275" fill="rgba(236,232,223,0.55)" font-size="7" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.08em">TABLE</text>
+  <text x="900" y="304" fill="#ECE8DF" font-size="12" font-weight="600" font-family="'IBM Plex Sans',sans-serif" text-anchor="middle">conversations</text>
+  <text x="900" y="320" fill="#8B90A0" font-size="9" font-family="'IBM Plex Mono',monospace" text-anchor="middle">anonymous_session_id</text>
+
+  <rect x="760" y="376" width="280" height="80" rx="6" fill="rgba(236,232,223,0.05)" stroke="#8B90A0"/>
+  <rect x="772" y="386" width="60" height="12" rx="2" fill="none" stroke="rgba(236,232,223,0.28)" stroke-width="0.8"/>
+  <text x="802" y="395" fill="rgba(236,232,223,0.55)" font-size="7" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.08em">TABLE</text>
+  <text x="900" y="424" fill="#ECE8DF" font-size="12" font-weight="600" font-family="'IBM Plex Sans',sans-serif" text-anchor="middle">messages · mood_entries</text>
+  <text x="900" y="440" fill="#8B90A0" font-size="9" font-family="'IBM Plex Mono',monospace" text-anchor="middle">текст остаётся здесь</text>
+
+  <!-- Низ -->
+  <rect x="380" y="568" width="260" height="80" rx="6" fill="#1D2B26" stroke="#6FA98C"/>
+  <rect x="392" y="578" width="60" height="12" rx="2" fill="none" stroke="rgba(111,169,140,0.50)" stroke-width="0.8"/>
+  <text x="422" y="587" fill="#6FA98C" font-size="7" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.08em">TABLE</text>
+  <text x="510" y="616" fill="#ECE8DF" font-size="12" font-weight="600" font-family="'IBM Plex Sans',sans-serif" text-anchor="middle">hr_aggregates</text>
+  <text x="510" y="632" fill="#6FA98C" font-size="9" font-family="'IBM Plex Mono',monospace" text-anchor="middle">порог выборки</text>
+
+  <rect x="720" y="568" width="260" height="80" rx="6" fill="#1A1E27" stroke="rgba(236,232,223,0.20)"/>
+  <rect x="732" y="578" width="44" height="12" rx="2" fill="none" stroke="rgba(236,232,223,0.28)" stroke-width="0.8"/>
+  <text x="754" y="587" fill="rgba(236,232,223,0.55)" font-size="7" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.08em">HR</text>
+  <text x="850" y="616" fill="#ECE8DF" font-size="12" font-weight="600" font-family="'IBM Plex Sans',sans-serif" text-anchor="middle">Дашборд компании</text>
+  <text x="850" y="632" fill="#8B90A0" font-size="9" font-family="'IBM Plex Mono',monospace" text-anchor="middle">тренд по отделу</text>
+
+  <!-- ── Легенда ───────────────────────────────────────────── -->
+  <line x1="40" y1="704" x2="1160" y2="704" stroke="rgba(236,232,223,0.10)" stroke-width="0.8"/>
+  <text x="40" y="724" fill="#8B90A0" font-size="8" font-family="'IBM Plex Mono',monospace" letter-spacing="0.14em">ЛЕГЕНДА</text>
+  <rect x="132" y="714" width="12" height="12" rx="2" fill="#3A311F" stroke="#D9A15B"/>
+  <text x="152" y="724" fill="#8B90A0" font-size="9" font-family="'IBM Plex Sans',sans-serif">пересекает границу</text>
+  <rect x="304" y="714" width="12" height="12" rx="2" fill="#1D2B26" stroke="#6FA98C"/>
+  <text x="324" y="724" fill="#8B90A0" font-size="9" font-family="'IBM Plex Sans',sans-serif">обезличенные данные</text>
+  <rect x="496" y="714" width="12" height="12" rx="2" fill="rgba(236,232,223,0.05)" stroke="#8B90A0"/>
+  <text x="516" y="724" fill="#8B90A0" font-size="9" font-family="'IBM Plex Sans',sans-serif">таблица</text>
+  <line x1="616" y1="720" x2="644" y2="720" stroke="#D9A15B" stroke-width="1" stroke-dasharray="4,4" opacity="0.55"/>
+  <text x="656" y="724" fill="#8B90A0" font-size="9" font-family="'IBM Plex Sans',sans-serif">граница разреза</text>
+</svg></div>
     <div class="thr-note reveal">
       <p>
         <b>Порог задан в базе данных, а не в интерфейсе.</b> Строки с малой выборкой
@@ -989,5 +1177,302 @@
   });
 </script>
 
+<div id="pitchmode">
+<div class="deck" id="deck">
+
+<!-- 1 ─ Заставка · 5 сек -->
+<section class="slide" data-sec="5">
+  <div class="eyebrow">Startup Orda · Кокшетау · Терриконовая долина</div>
+  <h1>Undercurrent</h1>
+  <p class="lead" style="margin-top:26px;font-size:clamp(18px,2vw,26px);color:var(--text)">
+    Слышим то, что не говорят вслух.
+  </p>
+  <p class="lead" style="margin-top:20px">
+    Анонимный ИИ-собеседник для сотрудников и агрегированная аналитика
+    выгорания для HR.
+  </p>
+  <div class="todo" style="margin-top:38px">
+    <b>заполнить</b>
+    Имя и фамилия выступающего — по шаблону ИНК они обязаны быть на первом слайде.
+  </div>
+</section>
+
+<!-- 2 ─ Клиент · 10 сек -->
+<section class="slide" data-sec="10">
+  <div class="eyebrow">02 · Клиент</div>
+  <h2>Платит компания. Пользуется сотрудник.</h2>
+  <div class="cols">
+    <div class="cell">
+      <div class="num">B2B</div>
+      <h3>Компании 20–1000 человек</h3>
+      <p>Казахстан, белый найм, есть HR-функция. IT, ритейл, банки, сервис — там, где текучка стоит дорого, а выгорание не видно в метриках.</p>
+    </div>
+    <div class="cell">
+      <div class="num cool">B2C</div>
+      <h3>Сотрудник сам за себя</h3>
+      <p>Работает там, где продукт не подключён, либо не хочет зависеть от работодателя вообще. Платит из своего кармана.</p>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:26px">
+    Решение о покупке принимает HR-директор. Пользуется — человек, который
+    ему об этом не скажет. Продукт обязан устраивать обоих.
+  </p>
+</section>
+
+<!-- 3 ─ Проблема · 10 сек -->
+<section class="slide" data-sec="10">
+  <div class="eyebrow">03 · Проблема</div>
+  <h2>Компания узнаёт о выгорании из заявления об уходе.</h2>
+  <ul class="points">
+    <li><b>Квартальный опрос неанонимен</b> — сотрудник отвечает так, как безопасно, а не как есть.</li>
+    <li><b>Психолог стоит от 15 000 ₸ за сессию</b> — для большинства это не вариант.</li>
+    <li><b>Сказать HR страшно:</b> есть ощущение, что признание слабости отразится на карьере.</li>
+  </ul>
+  <div class="stats" style="margin-top:40px">
+    <div class="stat"><div class="v">3–6 окладов</div><div class="k">стоит замена одного ушедшего сотрудника</div></div>
+    <div class="stat"><div class="v">месяцы</div><div class="k">проходят между началом выгорания и моментом, когда его замечают</div></div>
+  </div>
+</section>
+
+<!-- 4 ─ Решение · 30 сек -->
+<section class="slide" data-sec="30">
+  <div class="eyebrow">04 · Решение</div>
+  <h2>Сотрудник говорит правду, потому что связать её с ним невозможно.</h2>
+  <div class="cols">
+    <div class="cell">
+      <div class="num">01</div>
+      <h3>Сотрудник пишет</h3>
+      <p>Круглосуточно, анонимно. Почта подтверждает только право на вход — и хранится отдельно, хэшем.</p>
+    </div>
+    <div class="cell">
+      <div class="num">02</div>
+      <h3>ИИ разбирает паттерн</h3>
+      <p>Из реплики извлекаются обезличенные маркеры: истощение, нагрузка, конфликт. Текст остаётся у человека.</p>
+    </div>
+    <div class="cell">
+      <div class="num">03</div>
+      <h3>HR видит агрегат</h3>
+      <p>Тренд риска по отделу. Ни имён, ни цитат, ни возможности их получить.</p>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:26px">
+    Ключевое: анонимность — не обещание и не настройка, а свойство схемы
+    данных. Между «кто имеет право войти» и «что человек написал» в базе
+    <b style="color:var(--text)">нет ни одной связи</b>. Это проверяется
+    автоматическим тестом при каждом изменении.
+  </p>
+</section>
+
+<!-- 5 ─ Рынок · 20 сек -->
+<section class="slide" data-sec="20">
+  <div class="eyebrow">05 · Рынок</div>
+  <h2>Считаем от своего чека, а не от чужих отчётов.</h2>
+  <table>
+    <tr><th>Показатель</th><th>Значение</th><th>Откуда</th></tr>
+    <tr><td>Наёмных сотрудников в Казахстане</td><td class="us">7,3 млн</td><td>верхняя граница охвата</td></tr>
+    <tr><td>Средний чек на сотрудника в месяц</td><td class="us">~1 212 ₸</td><td>тариф ÷ размер команды</td></tr>
+    <tr><td>Рынок = чек × сотрудники × 12</td><td class="us">≈ 106 млрд ₸/год</td><td>верхняя граница</td></tr>
+    <tr><td>Достижимо при 1 % охвата за первый год</td><td class="us">320 млн ₸</td><td>цель</td></tr>
+  </table>
+  <p class="lead" style="margin-top:26px">
+    Тариф фиксированный за диапазон команды, а не за человека. Это не
+    только про удобство: считать сотрудников поштучно значило бы измерять,
+    сколько людей пишет, — то есть ровно то, что мы обещали не измерять.
+  </p>
+</section>
+
+<!-- 6 ─ Конкуренты · 20 сек -->
+<section class="slide" data-sec="20">
+  <div class="eyebrow">06 · Конкуренты</div>
+  <h2>Сегодня клиент решает это опросом, терапией или ничем.</h2>
+  <table>
+    <tr><th>Критерий</th><th>Undercurrent</th><th>HR-опрос</th><th>Частная терапия</th></tr>
+    <tr><td>Анонимность внутри компании</td><td class="us">Полная, конструкцией</td><td>Формальная</td><td>Да</td></tr>
+    <tr><td>Доступность</td><td class="us">24/7</td><td>Раз в квартал</td><td>По записи</td></tr>
+    <tr><td>Стоимость для сотрудника</td><td class="us">Бесплатно</td><td>Бесплатно</td><td>от 15 000 ₸</td></tr>
+    <tr><td>Аналитика для HR</td><td class="us">Есть, обезличенная</td><td>Искажена</td><td>Нет</td></tr>
+  </table>
+  <p class="lead" style="margin-top:24px">
+    Преимущество, которое нельзя скопировать за неделю: у нас нет
+    технической возможности показать HR переписку. Конкуренту с обычной
+    схемой данных придётся её переделывать целиком.
+  </p>
+</section>
+
+<!-- 7 ─ До инкубации -->
+<section class="slide" data-sec="0">
+  <div class="eyebrow">07 · До инкубации</div>
+  <h2>С чем пришли в программу.</h2>
+  <div class="todo">
+    <b>заполнить — знаете только вы</b>
+    Стадия на старте программы, количество клиентов и пилотов, состояние
+    бизнеса в 3–4 пунктах.<br><br>
+    Шаблон ИНК требует <b style="display:inline;font-size:inherit;letter-spacing:0;text-transform:none">обязательно</b>
+    указать количество экспортных контрактов до старта. Если их не было —
+    так и пишется: ноль. Это нормальная стартовая точка, и она делает
+    следующий слайд сильнее.
+  </div>
+</section>
+
+<!-- 8 ─ Что сделано · 40 сек -->
+<section class="slide" data-sec="40">
+  <div class="eyebrow">08 · Результаты инкубации</div>
+  <h2>Продукт работает, а не нарисован.</h2>
+  <ul class="points cool">
+    <li><b>MVP собран и запущен:</b> веб-приложение, база с разграничением доступа, ИИ-слой, телеграм-бот.</li>
+    <li><b>Анонимность подтверждена автоматическими тестами</b> — 56 проверок на живой базе, включая попытки обойти защиту служебным ключом.</li>
+    <li><b>Три канала:</b> веб, Telegram, мобильное приложение из того же кода.</li>
+    <li><b>Открытый код</b> — клиент может проверить обещание про анонимность сам, а не поверить на слово.</li>
+  </ul>
+  <div class="todo" style="margin-top:30px">
+    <b>дополнить цифрами</b>
+    Пилоты, интервью с HR, письма о намерениях, суммы. Шаблон требует
+    результат, а не деятельность: не «провели 20 интервью», а «две компании
+    согласились на пилот».
+  </div>
+</section>
+
+<!-- 8.2 ─ Экспортные контракты · 15 сек -->
+<section class="slide" data-sec="15">
+  <div class="eyebrow">08.2 · Экспорт</div>
+  <h2>Экспортный потенциал.</h2>
+  <div class="todo">
+    <b>заполнить — обязательный слайд</b>
+    Шаблон ИНК требует конкретные суммы по экспортным контрактам.<br><br>
+    Если контрактов нет — назовите ближайший рынок и почему именно он.
+    Продукт языконезависим по архитектуре, но упирается в язык модели и в
+    местное регулирование персональных данных. Узбекистан и Кыргызстан
+    ближе всего по обоим параметрам.
+  </div>
+</section>
+
+<!-- 9 ─ План · 15 сек -->
+<section class="slide" data-sec="15">
+  <div class="eyebrow">09 · План</div>
+  <h2>От пилотов к выручке за три года.</h2>
+  <div class="cols">
+    <div class="cell"><div class="num">Год 1</div><h3>Пилоты и первые платежи</h3><p>Подключение платежей, свой SMTP, публикация в сторах. Цель — 320 млн ₸ при 1 % охвата.</p></div>
+    <div class="cell"><div class="num">Год 2</div><h3>Масштаб по Казахстану</h3><p>Интеграции с HR-системами, корпоративные тарифы, психологи-партнёры.</p></div>
+    <div class="cell"><div class="num">Год 3</div><h3>Выход за пределы</h3><p>Соседние рынки СНГ, локальный сервер для крупных клиентов.</p></div>
+  </div>
+  <div class="todo" style="margin-top:26px">
+    <b>сверить</b>
+    Шаблон требует измеримые цели в деньгах, сопоставимые с размером рынка.
+    Цифры выше — заготовка, подставьте свои.
+  </div>
+</section>
+
+<!-- 10 ─ Команда · 10 сек -->
+<section class="slide" data-sec="10">
+  <div class="eyebrow">10 · Команда</div>
+  <h2>Кто делает Undercurrent.</h2>
+  <div class="todo">
+    <b>заполнить</b>
+    2–3 ключевые фигуры: имя, зона ответственности, релевантный опыт.<br><br>
+    Инвестор смотрит этот слайд, чтобы понять, почему справитесь именно вы.
+    Опыт важнее должности.
+  </div>
+</section>
+
+<!-- 11 ─ Инвестзапрос -->
+<section class="slide" data-sec="0">
+  <div class="eyebrow">11 · Запрос</div>
+  <h2>Сколько нужно и на что.</h2>
+  <div class="todo">
+    <b>заполнить</b>
+    Сумма и разбивка по назначению.<br><br>
+    Из того, что видно по продукту: подключение платёжного провайдера,
+    почтовая инфраструктура, публикация в сторах, привлечение первых
+    компаний, живые психологи для B2C-тарифа.
+  </div>
+</section>
+
+<!-- 12 ─ Визитка · 5 сек -->
+<section class="slide" data-sec="5">
+  <div class="eyebrow">Undercurrent</div>
+  <h1 style="font-size:clamp(30px,4.6vw,64px)">Слышим то,<br>что не говорят вслух.</h1>
+  <p class="lead" style="margin-top:26px">
+    Анонимный ИИ-собеседник для сотрудников и аналитика выгорания для HR.
+  </p>
+  <div class="todo" style="margin-top:36px">
+    <b>заполнить</b>
+    Имя выступающего, телефон, почта, ссылка на продукт.
+  </div>
+</section>
+
+</div>
+
+<div class="track" id="track"></div>
+<div class="bar">
+  <span><b id="idx">1</b> / <span id="total">12</span></span>
+  <span class="budget">бюджет слайда: <b id="budget">5</b> с</span>
+  <span>всего <b id="clock">0:00</b> / 3:00</span>
+  <span class="grow"></span>
+  <span><kbd>→</kbd> вперёд · <kbd>←</kbd> назад · <kbd>T</kbd> таймер · <kbd>F</kbd> во весь экран</span>
+</div>
+
+</div>
+
+<script>
+/* Питч включается по #pitch в адресе — ссылкой можно поделиться, и она
+   откроет сразу презентацию, а не сайт. */
+(function(){
+  const slides = [...document.querySelectorAll('#pitchmode .slide')];
+  let i = 0, started = null, tick = null;
+
+  function show(n){
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, k) => s.classList.toggle('on', k === i));
+    document.getElementById('idx').textContent = i + 1;
+    document.getElementById('budget').textContent = slides[i].dataset.sec;
+    document.getElementById('track').style.width = ((i + 1) / slides.length * 100) + '%';
+  }
+  function enter(){ document.body.classList.add('pitch'); show(i); }
+  function exit(){
+    document.body.classList.remove('pitch');
+    if (tick) { clearInterval(tick); tick = null; }
+    if (location.hash === '#pitch') history.replaceState(null, '', location.pathname);
+  }
+
+  function fmt(s){ return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0'); }
+  function timer(){
+    const c = document.getElementById('clock');
+    if (tick){ clearInterval(tick); tick = null; return; }
+    started = started || Date.now();
+    tick = setInterval(() => {
+      const s = Math.floor((Date.now() - started)/1000);
+      c.textContent = fmt(s);
+      c.classList.toggle('over', s > 180);
+    }, 250);
+  }
+
+  addEventListener('keydown', e => {
+    if (!document.body.classList.contains('pitch')) return;
+    if (e.key === 'Escape') return exit();
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown'){ e.preventDefault(); show(i+1); }
+    if (e.key === 'ArrowLeft'  || e.key === 'PageUp'){ e.preventDefault(); show(i-1); }
+    if (e.key === 'Home') show(0);
+    if (e.key === 'End')  show(slides.length-1);
+    if ('tTеЕ'.includes(e.key)) timer();
+    if ('fFаА'.includes(e.key)) document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+  });
+
+  let x0 = null;
+  addEventListener('touchstart', e => { if (document.body.classList.contains('pitch')) x0 = e.touches[0].clientX; }, {passive:true});
+  addEventListener('touchend', e => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0;
+    if (Math.abs(dx) > 60) show(i + (dx < 0 ? 1 : -1));
+    x0 = null;
+  }, {passive:true});
+
+  document.querySelectorAll('a[href="#pitch"]').forEach(a =>
+    a.addEventListener('click', ev => { ev.preventDefault(); location.hash = 'pitch'; enter(); }));
+  addEventListener('hashchange', () => location.hash === '#pitch' ? enter() : exit());
+
+  document.getElementById('total').textContent = slides.length;
+  if (location.hash === '#pitch') enter();
+})();
+</script>
 </body>
 </html>
