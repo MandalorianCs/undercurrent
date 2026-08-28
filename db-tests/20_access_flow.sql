@@ -138,3 +138,48 @@ select t_denied(
 reset role;
 
 do $$ begin raise notice 'Сценарий 1 пройден'; end $$;
+
+-- ── Удаление истории не отбирает доступ ───────────────────────
+--
+-- Экран настроек обещает: «Доступ к продукту при этом сохранится».
+-- Однажды это обещание уже разошлось с кодом — функция удаляла саму
+-- сессию, и сотрудник терял привязку к компании вместе с перепиской.
+--
+-- Сессия здесь своя, одноразовая. Первая версия проверки удаляла данные
+-- общей сессии, и третий сценарий недосчитывался разговора: тест ломал
+-- не продукт, а другой тест.
+
+insert into auth.users (id, is_anonymous) values
+  ('66666666-0000-0000-0000-000000000001', true);
+insert into anonymous_sessions (id, company_id) values
+  ('66666666-0000-0000-0000-000000000001', '33333333-0000-0000-0000-000000000001');
+insert into conversations (id, anonymous_session_id, company_id, department_tag) values
+  ('66666666-0000-0000-0000-000000000009', '66666666-0000-0000-0000-000000000001',
+   '33333333-0000-0000-0000-000000000001', null);
+insert into messages (conversation_id, role, content) values
+  ('66666666-0000-0000-0000-000000000009', 'user', 'Проверка удаления');
+insert into mood_entries (session_id, mood) values
+  ('66666666-0000-0000-0000-000000000001', 3);
+
+select t_as('66666666-0000-0000-0000-000000000001', null, true);
+set role authenticated;
+
+select t_ok((select count(*) from conversations) > 0, 'до удаления разговор есть');
+select delete_my_data();
+
+select t_eq((select count(*)::int from conversations),  0, 'разговоры удалены');
+select t_eq((select count(*)::int from messages),       0, 'сообщения ушли каскадом');
+select t_eq((select count(*)::int from mood_entries),   0, 'дневник удалён');
+
+reset role;
+select t_eq(
+  (select count(*)::int from anonymous_sessions
+    where id = '66666666-0000-0000-0000-000000000001'),
+  1,
+  'сессия на месте — доступ к продукту сохранился');
+select t_eq(
+  (select company_id from anonymous_sessions
+    where id = '66666666-0000-0000-0000-000000000001'),
+  '33333333-0000-0000-0000-000000000001'::uuid,
+  'привязка к компании тоже — новый билет просить не нужно');
+select t_logout();
