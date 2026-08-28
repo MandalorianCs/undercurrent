@@ -41,6 +41,17 @@ export function humanizeError(error: unknown): string {
   // человеку нельзя: «new row violates row-level security policy» ничего
   // ему не говорит, хотя означает всего лишь «это не ваши данные».
   const patterns: Array<[RegExp, string]> = [
+    // Миграции в этом проекте применяются руками, и пропустить одну —
+    // обычное дело. Сырое «column X does not exist» выглядит как
+    // поломка приложения, хотя означает всего лишь отставшую базу.
+    [
+      /column .* does not exist|Could not find the .* column/i,
+      'База отстала от приложения: не применена одна из миграций. Проверьте supabase/migrations',
+    ],
+    [
+      /function .* does not exist|Could not find the function/i,
+      'В базе нет нужной функции: не применена одна из миграций. Проверьте supabase/migrations',
+    ],
     [/row-level security/i, 'Эти данные принадлежат другой сессии'],
     [/permission denied/i, 'К этой таблице нет доступа — так и задумано'],
     [/Anonymous sign-ins are disabled/i,
