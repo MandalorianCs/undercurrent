@@ -37,7 +37,8 @@
     "test:crisis": "node --experimental-strip-types src/lib/companion.test.ts",
     "test": "npm run typecheck && npm run test:crisis && npm run test:db",
     "check:functions": "npx supabase functions serve --no-verify-jwt",
-    "deploy:functions": "npx supabase functions deploy companion"
+    "deploy:functions": "npx supabase functions deploy companion",
+    "verify:prod": "python scripts/verify-production.py"
   },
   "private": true
 }
