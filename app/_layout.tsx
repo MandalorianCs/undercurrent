@@ -38,8 +38,19 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     const onSignIn = seg[0] === 'sign-in';
     const ready = viewer.kind === 'anonymous' || viewer.kind === 'personal' || viewer.kind === 'hr';
 
+    // У HR своя стартовая страница. Без этого он попадал на экран чата:
+    // в панели вкладок чата уже нет, а открыт он всё равно — потому что
+    // корневой маршрут один на всех. Выглядело это как «продукт предлагает
+    // мне поговорить», причём кнопка «Начать разговор» у HR не работает:
+    // анонимной сессии, от имени которой создаётся разговор, у него нет.
+    const home = viewer.kind === 'hr' ? '/dashboard' : '/';
+
     if (!ready && !onSignIn) router.replace('/sign-in');
-    if (ready && onSignIn) router.replace('/');
+    if (ready && onSignIn) router.replace(home);
+
+    // Прямой заход на корень тоже уводим: адрес в браузере человек
+    // набирает руками чаще, чем кажется.
+    if (viewer.kind === 'hr' && seg.length <= 1) router.replace('/dashboard');
   }, [viewer, loading, segments, router]);
 
   if (loading) return <Loading />;
