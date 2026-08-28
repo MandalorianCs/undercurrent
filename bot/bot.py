@@ -50,9 +50,11 @@ Undercurrent нет по построению, и на чём держится �
 """
 
 import asyncio
+import json
 import logging
 import os
 import sys
+from datetime import datetime, timezone
 
 # Консоль Windows по умолчанию не в UTF-8, и Python выводит в неё русский
 # текст заменами вместо букв. Одна строка снимает весь класс проблемы.
@@ -65,6 +67,8 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart, CommandObject
 from aiogram.types import (
+    BufferedInputFile,
+    CallbackQuery,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     Message,
@@ -402,6 +406,163 @@ async def on_login(message: Message) -> None:
         "восстановить историю будет нечем.",
         disable_web_page_preview=True,
     )
+
+
+# ── Дневник состояния ─────────────────────────────────────────
+#
+# Дневник — ежедневная привычка, а привычки живут там, где человек и так
+# сидит. Ради одной отметки открывать приложение не станет почти никто.
+
+MOOD_SCALE = [
+    (1, "Совсем тяжело"),
+    (2, "Тяжело"),
+    (3, "Ровно"),
+    (4, "Неплохо"),
+    (5, "Хорошо"),
+]
+
+
+async def session_of(client: httpx.AsyncClient, chat_id: int) -> dict | None:
+    """Привязка этого чата, если она есть."""
+    rows = await rest_get(
+        client, "telegram_links",
+        {"telegram_id": f"eq.{chat_id}", "select": "user_id,kind"},
+    )
+    return rows[0] if rows else None
+
+
+@dp.message(F.text.in_({"/mood", "/дневник"}))
+async def on_mood(message: Message) -> None:
+    async with httpx.AsyncClient(timeout=20) as client:
+        link = await session_of(client, message.chat.id)
+
+    if not link or link["kind"] != "personal":
+        await message.answer("Дневник доступен по личной подписке. Отправьте /login.")
+        return
+
+    # Подписи вместо цифр. «Оцените от 1 до 5» каждый понимает по-своему,
+    # и такой ряд нельзя сравнить даже с собой же неделю спустя.
+    await message.answer(
+        "Как сегодня?",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text=label, callback_data=f"mood:{value}")]
+            for value, label in MOOD_SCALE
+        ]),
+    )
+
+
+@dp.callback_query(F.data.startswith("mood:"))
+async def on_mood_pick(query: CallbackQuery) -> None:
+    value = int(query.data.split(":", 1)[1])
+    label = dict(MOOD_SCALE)[value]
+
+    async with httpx.AsyncClient(timeout=20) as client:
+        link = await session_of(client, query.message.chat.id)
+        if not link:
+            await query.answer("Привязка потерялась, отправьте /login", show_alert=True)
+            return
+
+        response = await rest_post(
+            client, "mood_entries", {"session_id": link["user_id"], "mood": value, "note": None}
+        )
+        if response.status_code >= 400:
+            log.warning("дневник не записался: %s", response.text)
+            await query.answer("Не записалось, попробуйте ещё раз", show_alert=True)
+            return
+
+    # Заменяем сообщение с кнопками на результат: список из пяти вариантов,
+    # оставшийся в переписке, через неделю не даёт понять, что было выбрано.
+    await query.message.edit_text(
+        f"Записал: <b>{label}</b>\n\n"
+        "Заметку к записи можно добавить в приложении — здесь я не спрашиваю,"
+        " чтобы не путать её с репликой в разговоре.",
+        parse_mode=ParseMode.HTML,
+    )
+    await query.answer()
+
+
+# ── Свои данные ───────────────────────────────────────────────
+
+
+@dp.message(F.text.in_({"/export", "/выгрузка"}))
+async def on_export(message: Message) -> None:
+    """
+    Та же выгрузка, что на экране настроек.
+
+    Файлом, а не сообщением: переписка за месяц не помещается в лимит
+    Telegram, а обрезанная выгрузка хуже отсутствующей — человек решит,
+    что это всё, что о нём хранится.
+    """
+    async with httpx.AsyncClient(timeout=30) as client:
+        link = await session_of(client, message.chat.id)
+        if not link:
+            await message.answer("Сначала /login.")
+            return
+
+        sid = link["user_id"]
+        convs = await rest_get(client, "conversations", {
+            "anonymous_session_id": f"eq.{sid}",
+            "select": "id,department_tag,started_at,messages(role,content,created_at)",
+            "order": "started_at.desc",
+        })
+        moods = await rest_get(client, "mood_entries", {
+            "session_id": f"eq.{sid}", "select": "mood,note,created_at", "order": "created_at.desc",
+        })
+
+    dump = json.dumps(
+        {"session_id": sid, "exported_at": datetime.now(timezone.utc).isoformat(),
+         "conversations": convs, "mood_entries": moods},
+        ensure_ascii=False, indent=2,
+    ).encode("utf-8")
+
+    await message.answer_document(
+        BufferedInputFile(dump, filename="undercurrent-export.json"),
+        caption=(
+            f"Разговоров: {len(convs)}, записей дневника: {len(moods)}.\n\n"
+            "Это всё, что о вас хранится. Ни почты, ни имени, ни номера здесь нет —"
+            " их не существует и в базе."
+        ),
+    )
+
+
+@dp.message(F.text.in_({"/delete", "/удалить"}))
+async def on_delete(message: Message) -> None:
+    await message.answer(
+        "Удалить все разговоры и записи дневника?\n\n"
+        "Это необратимо. Доступ к продукту сохранится — удаление истории"
+        " не отбирает вход и ни для кого не выглядит событием.\n\n"
+        "Сначала заберите выгрузку, если она вам нужна: /export",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton(text="Да, удалить всё", callback_data="wipe:yes"),
+            InlineKeyboardButton(text="Отмена", callback_data="wipe:no"),
+        ]]),
+    )
+
+
+@dp.callback_query(F.data.startswith("wipe:"))
+async def on_delete_confirm(query: CallbackQuery) -> None:
+    if query.data.endswith(":no"):
+        await query.message.edit_text("Отменил. Ничего не удалено.")
+        await query.answer()
+        return
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        link = await session_of(client, query.message.chat.id)
+        if not link:
+            await query.answer("Привязка потерялась", show_alert=True)
+            return
+
+        sid = link["user_id"]
+        # Удаляем содержимое, а не саму сессию: сессия — это и есть доступ.
+        # Сообщения уходят каскадом от разговоров.
+        await rest_delete(client, "conversations", {"anonymous_session_id": f"eq.{sid}"})
+        await rest_delete(client, "mood_entries", {"session_id": f"eq.{sid}"})
+
+    await query.message.edit_text(
+        "Удалил. Разговоров и записей дневника больше нет.\n\n"
+        "Доступ остался: можете писать дальше, история начнётся с чистого листа."
+    )
+    await query.answer()
 
 
 # ── Разговор ──────────────────────────────────────────────────
