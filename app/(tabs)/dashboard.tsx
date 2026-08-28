@@ -4,19 +4,24 @@ import { Badge, Card, Empty, H2, Loading, Notice, P, Screen } from '../../src/co
 import { fetchDepartments, fetchHrAggregates, fetchMinSampleSize } from '../../src/lib/api';
 import { useAuth } from '../../src/lib/auth';
 import { humanizeError } from '../../src/lib/supabase';
-import type { Department, HrAggregate } from '../../src/lib/types';
+import type { Department, HrAggregate, TrendDirection } from '../../src/lib/types';
 import { colors, font, radius, riskTone, spacing } from '../../src/theme';
 
 /**
  * Дельта в скобках после направления: «↑ вырос (+34%)».
  *
- * Отдельно от стрелки намеренно. Стрелка появляется только при движении
- * больше пяти пунктов — это полоса нечувствительности против шума.
- * Дельта же может быть посчитана и при меньшем движении, и показывать
- * «→ без изменений (+3%)» значит спорить с самим собой.
+ * Прячется при тренде «ровно» — и это не косметика. Стрелка появляется
+ * только при движении больше пяти пунктов: это полоса нечувствительности
+ * против шума. Дельта считается и при меньшем движении, поэтому
+ * «→ без изменений (+5%)» — фраза, спорящая сама с собой, после которой
+ * не верят обеим её половинам.
+ *
+ * Правило одно на все карточки. Один раз оно уже разъехалось: у отделов
+ * дельта пряталась, у карточки компании — нет, и она показывала ровно то
+ * противоречие, ради устранения которого правило и написано.
  */
-function formatDelta(pct: number | null): string {
-  if (pct === null || pct === 0) return '';
+function formatDelta(pct: number | null, trend?: TrendDirection): string {
+  if (trend === 'flat' || pct === null || pct === 0) return '';
   return `  (${pct > 0 ? '+' : ''}${pct}%)`;
 }
 
@@ -98,7 +103,7 @@ export default function Dashboard() {
                 />
                 <Text style={s.trend}>
                   {TREND[overall.trend_direction]?.arrow} {TREND[overall.trend_direction]?.text} за период
-                  {formatDelta(overall.risk_delta_pct)}
+                  {formatDelta(overall.risk_delta_pct, overall.trend_direction)}
                 </Text>
               </View>
             </View>
@@ -126,7 +131,7 @@ export default function Dashboard() {
                       <Text style={s.dept}>{title(row.department_tag)}</Text>
                       <Text style={s.trend}>
                         {TREND[row.trend_direction]?.arrow} {TREND[row.trend_direction]?.text}
-                        {formatDelta(row.trend_direction === 'flat' ? null : row.risk_delta_pct)}
+                        {formatDelta(row.risk_delta_pct, row.trend_direction)}
                         {'  ·  '}
                         {row.sample_size} чел.
                       </Text>
