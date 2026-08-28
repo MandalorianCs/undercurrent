@@ -351,32 +351,38 @@ async def on_login(message: Message) -> None:
             existing = await rest_rpc(client, "user_by_telegram", {"p_chat_id": chat_id})
             user_id = existing.json() if existing.status_code < 400 else None
 
-            if not user_id:
-                created = await admin(
-                    client,
-                    "admin/users",
-                    {
-                        "email": email,
-                        "email_confirm": True,
-                        "user_metadata": {"source": "telegram"},
-                    },
-                )
-                user_id = created["id"]
-
-                bound = await rest_rpc(
-                    client,
-                    "link_personal_by_telegram",
-                    {
-                        "p_user": user_id,
-                        "p_chat_id": chat_id,
-                        "p_username": message.from_user.username if message.from_user else None,
-                    },
-                )
-                if bound.status_code >= 400:
-                    raise RuntimeError(bound.text)
-
+            # Одним вызовом вместо двух: generate_link заводит учётную
+            # запись, если её нет, находит существующую, если есть, и сразу
+            # отдаёт ссылку входа.
+            #
+            # Раньше здесь было «создать через admin/users, потом
+            # привязать». Если привязка падала, запись оставалась висеть, и
+            # следующая попытка спотыкалась уже о «такой пользователь
+            # существует» — человек оказывался заперт, ни разу не войдя.
+            # Уборка после сбоя эту дыру не закрывает, а лишь сужает: между
+            # созданием и уборкой бот может умереть. Один идемпотентный
+            # вызов закрывает её целиком.
             link = await admin(client, "admin/generate_link", {"type": "magiclink", "email": email})
             action = link.get("action_link") or link.get("properties", {}).get("action_link")
+            user_id = user_id or link.get("user", {}).get("id") or link.get("id")
+
+            if not user_id:
+                raise RuntimeError(f"не удалось определить учётную запись: {str(link)[:200]}")
+
+            bound = await rest_rpc(
+                client,
+                "link_personal_by_telegram",
+                {
+                    "p_user": user_id,
+                    "p_chat_id": chat_id,
+                    "p_username": message.from_user.username if message.from_user else None,
+                },
+            )
+            # Привязка идемпотентна (on conflict do update), поэтому её
+            # можно звать при каждом входе — и она же чинит случай, когда
+            # запись создалась, а привязаться не успела.
+            if bound.status_code >= 400:
+                raise RuntimeError(bound.text)
 
         except Exception as exc:
             log.warning("вход через Telegram не удался: %s", exc)
