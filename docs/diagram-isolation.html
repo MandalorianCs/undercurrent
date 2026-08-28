@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Undercurrent — разрез схемы данных</title>
+<!-- Без preconnect: единственная разрешённая внешняя ссылка в диаграмме —
+     сам стиль шрифтов. Preconnect ускорял бы загрузку, но проверка
+     самодостаточности файла считает его лишней внешней зависимостью,
+     и она права: диаграмму будут вставлять в презентации и статьи. -->
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Токены проекта, а не дефолтные для навыка: диаграмма встаёт рядом с
+   приложением и лендингом, и должна читаться как их часть. */
+:root{
+  --paper:#12151C; --panel:#1A1E27; --rule:#2A2F3B;
+  --ink:#ECE8DF; --muted:#8B90A0;
+  --warm:#D9A15B; --warm-tint:#3A311F;
+  --cool:#6FA98C; --cool-tint:#1D2B26;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper); color:var(--ink); font-family:'IBM Plex Sans',system-ui,sans-serif; padding:48px 32px 64px}
+.page{max-width:1200px;margin:0 auto}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--warm);margin-bottom:12px}
+h1{font-family:'Fraunces',serif;font-weight:600;font-size:34px;line-height:1.15;letter-spacing:-.01em;margin-bottom:12px}
+.sub{color:var(--muted);font-size:16px;line-height:1.55;max-width:76ch;margin-bottom:36px}
+svg{width:100%;height:auto;display:block}
+.foot{margin-top:32px;padding-top:18px;border-top:1px solid var(--rule);color:var(--muted);font-size:13.5px;line-height:1.6;max-width:82ch}
+.foot b{color:var(--ink)}
+.mono{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--warm)}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="eyebrow">Undercurrent · архитектура данных</div>
+  <h1>Связать переписку с человеком невозможно — не по правилам, а по устройству.</h1>
+  <p class="sub">
+    Схема разрезана надвое. Слева хранится право на вход, справа — то, что человек написал.
+    Между половинами нет ни одного внешнего ключа: их нельзя соединить запросом, потому что
+    соединять нечем.
+  </p>
+
+<svg viewBox="0 0 1200 760" role="img" aria-labelledby="isolation-title isolation-desc"
+     xmlns="http://www.w3.org/2000/svg">
+  <title id="isolation-title">Разрез схемы данных Undercurrent</title>
+  <desc id="isolation-desc">Схема из двух несвязанных половин: слева проверка права на вход по корпоративной почте, справа анонимная переписка сотрудника. Единственное, что переходит границу, — одноразовый билет доступа. Внизу HR видит только агрегаты с порогом выборки.</desc>
+
+  <defs>
+    <marker id="ar" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#8B90A0"/>
+    </marker>
+    <marker id="ar-warm" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#D9A15B"/>
+    </marker>
+    <marker id="ar-cool" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#6FA98C"/>
+    </marker>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#12151C"/>
+
+  <!-- ── Зоны (рисуются первыми) ───────────────────────────── -->
+  <rect x="40" y="104" width="460" height="384" rx="8" fill="rgba(236,232,223,0.02)" stroke="rgba(236,232,223,0.10)" stroke-width="0.8"/>
+  <rect x="60" y="108" width="196" height="12" rx="2" fill="#12151C"/>
+  <text x="158" y="117" fill="rgba(236,232,223,0.45)" font-size="7" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.14em">КТО ИМЕЕТ ПРАВО ВОЙТИ</text>
+
+  <rect x="700" y="104" width="460" height="384" rx="8" fill="rgba(236,232,223,0.02)" stroke="rgba(236,232,223,0.10)" stroke-width="0.8"/>
+  <rect x="720" y="108" width="212" height="12" rx="2" fill="#12151C"/>
+  <text x="826" y="117" fill="rgba(236,232,223,0.45)" font-size="7" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.14em">ЧТО ЧЕЛОВЕК НАПИСАЛ</text>
+
+  <rect x="340" y="536" width="660" height="144" rx="8" fill="rgba(236,232,223,0.02)" stroke="rgba(236,232,223,0.10)" stroke-width="0.8"/>
+  <rect x="360" y="540" width="164" height="12" rx="2" fill="#12151C"/>
+  <text x="442" y="549" fill="rgba(236,232,223,0.45)" font-size="7" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.14em">ЧТО ВИДИТ КОМПАНИЯ</text>
+
+  <!-- ── Граница ───────────────────────────────────────────── -->
+  <line x1="600" y1="88" x2="600" y2="500" stroke="#D9A15B" stroke-width="1" stroke-dasharray="4,4" opacity="0.55"/>
+  <rect x="488" y="72" width="224" height="14" rx="2" fill="#12151C"/>
+  <text x="600" y="83" fill="#D9A15B" font-size="8" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.12em">ВНЕШНИХ КЛЮЧЕЙ ЗДЕСЬ НЕТ</text>
+
+  <!-- ── Связи (до узлов, чтобы уходили под них) ───────────── -->
+  <line x1="240" y1="216" x2="240" y2="252" stroke="#8B90A0" stroke-width="1.2" marker-end="url(#ar)"/>
+  <line x1="240" y1="336" x2="240" y2="372" stroke="#8B90A0" stroke-width="1.2" marker-end="url(#ar)"/>
+
+  <!-- Билет — единственное, что пересекает границу -->
+  <path d="M 380,416 H 692 Q 700,416 700,408 V 184 Q 700,176 708,176 H 756"
+        fill="none" stroke="#D9A15B" stroke-width="1.6" marker-end="url(#ar-warm)"/>
+  <rect x="472" y="396" width="56" height="12" rx="2" fill="#12151C"/>
+  <text x="500" y="405" fill="#D9A15B" font-size="8" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.08em">БИЛЕТ</text>
+
+  <line x1="900" y1="216" x2="900" y2="252" stroke="#8B90A0" stroke-width="1.2" marker-end="url(#ar)"/>
+  <line x1="900" y1="336" x2="900" y2="372" stroke="#8B90A0" stroke-width="1.2" marker-end="url(#ar)"/>
+
+  <path d="M 900,456 V 520 Q 900,528 892,528 H 518 Q 510,528 510,536 V 564"
+        fill="none" stroke="#6FA98C" stroke-width="1.2" marker-end="url(#ar-cool)"/>
+  <rect x="668" y="508" width="72" height="12" rx="2" fill="#12151C"/>
+  <text x="704" y="517" fill="#6FA98C" font-size="8" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.08em">МАРКЕРЫ</text>
+
+  <line x1="640" y1="608" x2="716" y2="608" stroke="#6FA98C" stroke-width="1.2" marker-end="url(#ar-cool)"/>
+  <rect x="648" y="588" width="60" height="12" rx="2" fill="#12151C"/>
+  <text x="678" y="597" fill="#6FA98C" font-size="8" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.08em">≥ 5 ЧЕЛ.</text>
+
+  <!-- ── Узлы ──────────────────────────────────────────────── -->
+  <!-- Левая половина -->
+  <rect x="100" y="136" width="280" height="80" rx="6" fill="#1A1E27" stroke="rgba(236,232,223,0.20)"/>
+  <rect x="112" y="146" width="52" height="12" rx="2" fill="none" stroke="rgba(236,232,223,0.28)" stroke-width="0.8"/>
+  <text x="138" y="155" fill="rgba(236,232,223,0.55)" font-size="7" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.08em">AUTH</text>
+  <text x="240" y="184" fill="#ECE8DF" font-size="12" font-weight="600" font-family="'IBM Plex Sans',sans-serif" text-anchor="middle">Корпоративный аккаунт</text>
+  <text x="240" y="200" fill="#8B90A0" font-size="9" font-family="'IBM Plex Mono',monospace" text-anchor="middle">email: anel@company.kz</text>
+
+  <rect x="100" y="256" width="280" height="80" rx="6" fill="rgba(236,232,223,0.05)" stroke="#8B90A0"/>
+  <rect x="112" y="266" width="60" height="12" rx="2" fill="none" stroke="rgba(236,232,223,0.28)" stroke-width="0.8"/>
+  <text x="142" y="275" fill="rgba(236,232,223,0.55)" font-size="7" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.08em">TABLE</text>
+  <text x="240" y="304" fill="#ECE8DF" font-size="12" font-weight="600" font-family="'IBM Plex Sans',sans-serif" text-anchor="middle">employee_access</text>
+  <text x="240" y="320" fill="#8B90A0" font-size="9" font-family="'IBM Plex Mono',monospace" text-anchor="middle">corporate_email_hash</text>
+
+  <rect x="100" y="376" width="280" height="80" rx="6" fill="#3A311F" stroke="#D9A15B"/>
+  <rect x="112" y="386" width="60" height="12" rx="2" fill="none" stroke="rgba(217,161,91,0.50)" stroke-width="0.8"/>
+  <text x="142" y="395" fill="#D9A15B" font-size="7" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.08em">TABLE</text>
+  <text x="240" y="424" fill="#ECE8DF" font-size="12" font-weight="600" font-family="'IBM Plex Sans',sans-serif" text-anchor="middle">access_grants</text>
+  <text x="240" y="440" fill="#D9A15B" font-size="9" font-family="'IBM Plex Mono',monospace" text-anchor="middle">одноразовый, гасится</text>
+
+  <!-- Правая половина -->
+  <rect x="760" y="136" width="280" height="80" rx="6" fill="#1A1E27" stroke="rgba(236,232,223,0.20)"/>
+  <rect x="772" y="146" width="52" height="12" rx="2" fill="none" stroke="rgba(236,232,223,0.28)" stroke-width="0.8"/>
+  <text x="798" y="155" fill="rgba(236,232,223,0.55)" font-size="7" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.08em">AUTH</text>
+  <text x="900" y="184" fill="#ECE8DF" font-size="12" font-weight="600" font-family="'IBM Plex Sans',sans-serif" text-anchor="middle">Анонимный аккаунт</text>
+  <text x="900" y="200" fill="#8B90A0" font-size="9" font-family="'IBM Plex Mono',monospace" text-anchor="middle">email: null · is_anonymous</text>
+
+  <rect x="760" y="256" width="280" height="80" rx="6" fill="rgba(236,232,223,0.05)" stroke="#8B90A0"/>
+  <rect x="772" y="266" width="60" height="12" rx="2" fill="none" stroke="rgba(236,232,223,0.28)" stroke-width="0.8"/>
+  <text x="802" y="275" fill="rgba(236,232,223,0.55)" font-size="7" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.08em">TABLE</text>
+  <text x="900" y="304" fill="#ECE8DF" font-size="12" font-weight="600" font-family="'IBM Plex Sans',sans-serif" text-anchor="middle">conversations</text>
+  <text x="900" y="320" fill="#8B90A0" font-size="9" font-family="'IBM Plex Mono',monospace" text-anchor="middle">anonymous_session_id</text>
+
+  <rect x="760" y="376" width="280" height="80" rx="6" fill="rgba(236,232,223,0.05)" stroke="#8B90A0"/>
+  <rect x="772" y="386" width="60" height="12" rx="2" fill="none" stroke="rgba(236,232,223,0.28)" stroke-width="0.8"/>
+  <text x="802" y="395" fill="rgba(236,232,223,0.55)" font-size="7" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.08em">TABLE</text>
+  <text x="900" y="424" fill="#ECE8DF" font-size="12" font-weight="600" font-family="'IBM Plex Sans',sans-serif" text-anchor="middle">messages · mood_entries</text>
+  <text x="900" y="440" fill="#8B90A0" font-size="9" font-family="'IBM Plex Mono',monospace" text-anchor="middle">текст остаётся здесь</text>
+
+  <!-- Низ -->
+  <rect x="380" y="568" width="260" height="80" rx="6" fill="#1D2B26" stroke="#6FA98C"/>
+  <rect x="392" y="578" width="60" height="12" rx="2" fill="none" stroke="rgba(111,169,140,0.50)" stroke-width="0.8"/>
+  <text x="422" y="587" fill="#6FA98C" font-size="7" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.08em">TABLE</text>
+  <text x="510" y="616" fill="#ECE8DF" font-size="12" font-weight="600" font-family="'IBM Plex Sans',sans-serif" text-anchor="middle">hr_aggregates</text>
+  <text x="510" y="632" fill="#6FA98C" font-size="9" font-family="'IBM Plex Mono',monospace" text-anchor="middle">порог выборки</text>
+
+  <rect x="720" y="568" width="260" height="80" rx="6" fill="#1A1E27" stroke="rgba(236,232,223,0.20)"/>
+  <rect x="732" y="578" width="44" height="12" rx="2" fill="none" stroke="rgba(236,232,223,0.28)" stroke-width="0.8"/>
+  <text x="754" y="587" fill="rgba(236,232,223,0.55)" font-size="7" font-family="'IBM Plex Mono',monospace" text-anchor="middle" letter-spacing="0.08em">HR</text>
+  <text x="850" y="616" fill="#ECE8DF" font-size="12" font-weight="600" font-family="'IBM Plex Sans',sans-serif" text-anchor="middle">Дашборд компании</text>
+  <text x="850" y="632" fill="#8B90A0" font-size="9" font-family="'IBM Plex Mono',monospace" text-anchor="middle">тренд по отделу</text>
+
+  <!-- ── Легенда ───────────────────────────────────────────── -->
+  <line x1="40" y1="704" x2="1160" y2="704" stroke="rgba(236,232,223,0.10)" stroke-width="0.8"/>
+  <text x="40" y="724" fill="#8B90A0" font-size="8" font-family="'IBM Plex Mono',monospace" letter-spacing="0.14em">ЛЕГЕНДА</text>
+  <rect x="132" y="714" width="12" height="12" rx="2" fill="#3A311F" stroke="#D9A15B"/>
+  <text x="152" y="724" fill="#8B90A0" font-size="9" font-family="'IBM Plex Sans',sans-serif">пересекает границу</text>
+  <rect x="304" y="714" width="12" height="12" rx="2" fill="#1D2B26" stroke="#6FA98C"/>
+  <text x="324" y="724" fill="#8B90A0" font-size="9" font-family="'IBM Plex Sans',sans-serif">обезличенные данные</text>
+  <rect x="496" y="714" width="12" height="12" rx="2" fill="rgba(236,232,223,0.05)" stroke="#8B90A0"/>
+  <text x="516" y="724" fill="#8B90A0" font-size="9" font-family="'IBM Plex Sans',sans-serif">таблица</text>
+  <line x1="616" y1="720" x2="644" y2="720" stroke="#D9A15B" stroke-width="1" stroke-dasharray="4,4" opacity="0.55"/>
+  <text x="656" y="724" fill="#8B90A0" font-size="9" font-family="'IBM Plex Sans',sans-serif">граница разреза</text>
+</svg>
+
+  <div class="foot">
+    <p>
+      <b>Единственное, что связывает половины, — <span class="mono">company_id</span>.</b>
+      Это факт «сотрудник вот этой компании», а не «вот этот сотрудник». По нему нельзя
+      выйти на человека, потому что он одинаков у всех сотрудников компании.
+    </p>
+    <p style="margin-top:12px">
+      Билет живёт минуты и гасится при использовании. Он переносит через границу ровно одно
+      утверждение — «предъявитель работает в компании X». Кто именно, не переносится: переносить нечем.
+    </p>
+    <p style="margin-top:12px">
+      Отсутствие связей между половинами проверяется автоматическим тестом при каждом изменении схемы —
+      запросом к системному каталогу Postgres, а не доверием к коду.
+    </p>
+  </div>
+</div>
+</body>
+</html>

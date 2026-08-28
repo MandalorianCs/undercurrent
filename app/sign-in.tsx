@@ -1,9 +1,12 @@
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { Linking, Text, View } from 'react-native';
 import { Button, Card, Chip, Field, H1, H2, Notice, P, Screen } from '../src/components/ui';
 import { useAuth } from '../src/lib/auth';
 import { humanizeError } from '../src/lib/supabase';
 import { colors, font, spacing, typeface } from '../src/theme';
+
+/** Имя бота из окружения — у разработки и продакшна они разные. */
+const TELEGRAM_BOT = process.env.EXPO_PUBLIC_TELEGRAM_BOT ?? 'undercurrent_psycho_bot';
 
 type Mode = 'corporate' | 'personal';
 type Step = 'email' | 'code' | 'grant' | 'anonymous';
@@ -234,6 +237,34 @@ export default function SignIn() {
             loading={busy}
             disabled={grant.trim().length < 8}
           />
+        </Card>
+      ) : null}
+
+      {/* Вход через Telegram.
+          Стоит отдельно, а не третьей вкладкой рядом с «Я сотрудник
+          компании»: для корпоративного доступа он не работает и не может
+          — корпоративная почта там доказывает право на вход, а Telegram
+          такого не доказывает. Отдельным блоком со своей подписью это
+          честно; вкладкой — обещание равного пути, который для половины
+          людей окажется не тем. */}
+      {current === 'email' ? (
+        <Card>
+          <H2>Или через Telegram</H2>
+          <P muted>
+            Личная подписка одним нажатием — без почты и пароля. Бот заведёт аккаунт и пришлёт
+            ссылку обратно сюда.
+          </P>
+          <Button
+            title="Открыть бота"
+            variant="secondary"
+            onPress={() => {
+              Linking.openURL(`https://t.me/${TELEGRAM_BOT}?start=login`).catch(() => {});
+            }}
+          />
+          <P muted>
+            Для корпоративного доступа так войти нельзя: работу в компании подтверждает только
+            рабочая почта.
+          </P>
         </Card>
       ) : null}
 

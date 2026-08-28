@@ -182,6 +182,13 @@ async def on_start_with_code(message: Message, command: CommandObject) -> None:
     """
     code = (command.args or "").strip()
 
+    # Кнопка «Открыть бота» на экране входа приводит сюда с меткой login.
+    # Это не код привязки, а просьба завести личную подписку — иначе
+    # человек получил бы «код не найден» и решил, что кнопка сломана.
+    if code == "login":
+        await on_login(message)
+        return
+
     async with httpx.AsyncClient(timeout=20) as client:
         rows = await rest_get(
             client,
